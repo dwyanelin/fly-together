@@ -14,17 +14,26 @@ export async function fetchMatchingFlights(
   const url = 'https://serpapi.com/search.json';
   
   try {
-    const response = await axios.get<SerpApiResponse>(url, {
-      params: {
-        engine: 'google_flights',
-        departure_id: departureId,
-        arrival_id: arrivalId,
-        outbound_date: outboundDate,
-        return_date: returnDate,
-        currency: currency,
-        api_key: apiKey
-      }
-    });
+    const params: any = {
+      engine: 'google_flights',
+      departure_id: departureId,
+      arrival_id: arrivalId,
+      outbound_date: outboundDate,
+      return_date: returnDate,
+      currency: currency,
+      api_key: apiKey,
+      stops: '1' // Only show direct flights as per request
+    };
+
+    // If allowed airlines are provided, we should send them directly to SerpApi
+    // Because Google Flights calculates round-trip prices using the cheapest available return flight.
+    // If we don't restrain it here, SerpApi will calculate the price using LCCs for the return leg.
+    if (allowedAirlines && allowedAirlines.length > 0) {
+      const allAirlineCodes = allowedAirlines.flatMap(a => a.codes);
+      params.include_airlines = allAirlineCodes.join(',');
+    }
+
+    const response = await axios.get<SerpApiResponse>(url, { params });
 
     const data = response.data;
     

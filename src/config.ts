@@ -29,21 +29,21 @@ export const config = {
       name: '東京(成田)',
       departure_id: 'TPE',
       arrival_id: 'NRT',
-      maxPrice: 12000,
+      maxPrice: 13000,
       allowedAirlines: allowedTraditionalAirlines
     },
     {
       name: '東京(羽田)',
       departure_id: 'TSA', // Taipei Songshan is for HND flights
       arrival_id: 'HND',
-      maxPrice: 12000,
+      maxPrice: 13000,
       allowedAirlines: allowedTraditionalAirlines
     },
     {
       name: '峇里島',
       departure_id: 'TPE',
       arrival_id: 'DPS',
-      maxPrice: 16000,
+      maxPrice: 17000,
       allowedAirlines: allowedTraditionalAirlines
     }
   ] as TargetConfig[]
