@@ -39,6 +39,13 @@ export const config = {
       allowedAirlines: allowedTraditionalAirlines
     },
     {
+      name: '福岡',
+      departure_id: 'TPE',
+      arrival_id: 'FUK',
+      maxPrice: 12000,
+      allowedAirlines: allowedTraditionalAirlines
+    },
+    {
       name: '峇里島',
       departure_id: 'TPE',
       arrival_id: 'DPS',
