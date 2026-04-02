@@ -43,5 +43,6 @@ export function generateGoogleFlightsUrl(
   let rawB64 = Buffer.from(pbBytes).toString('base64');
   rawB64 = rawB64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   
-  return `https://www.google.com/travel/flights/search?tfs=${rawB64}`;
+  // Add &tfu=EgYIAhAAGAA to force sorting by price instead of best flights
+  return `https://www.google.com/travel/flights/search?tfs=${rawB64}&tfu=EgYIAhAAGAA`;
 }
