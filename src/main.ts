@@ -68,7 +68,7 @@ async function main() {
   if (notifications.length > 0) {
     console.log('\nSending LINE Notifications...');
     const message = '\n\n' + notifications.join('\n\n---\n\n');
-    await sendLineMessage(config.lineChannelAccessToken, config.lineUserId, message);
+    await sendLineMessage(config.lineChannelAccessToken, message);
   } else {
     console.log('\nNo matching flights found. Notification skipped.');
   }

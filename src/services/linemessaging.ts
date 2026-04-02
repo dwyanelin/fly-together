@@ -1,16 +1,16 @@
 import axios from 'axios';
 
-export async function sendLineMessage(channelAccessToken: string, userId: string, text: string): Promise<void> {
-  if (!channelAccessToken || !userId) {
-    console.warn('LINE Channel Access Token or User ID not provided; skipping notification.');
+export async function sendLineMessage(channelAccessToken: string, text: string): Promise<void> {
+  if (!channelAccessToken) {
+    console.warn('LINE Channel Access Token not provided; skipping notification.');
     return;
   }
 
   try {
+    // Using the Broadcast API to send to everyone who has added the bot as a friend
     await axios.post(
-      'https://api.line.me/v2/bot/message/push',
+      'https://api.line.me/v2/bot/message/broadcast',
       {
-        to: userId,
         messages: [
           {
             type: 'text',
@@ -26,8 +26,8 @@ export async function sendLineMessage(channelAccessToken: string, userId: string
       }
     );
 
-    console.log('LINE message sent successfully.');
+    console.log('LINE broadcast message sent successfully to all friends.');
   } catch (error) {
-    console.error('Failed to send LINE message:', error);
+    console.error('Failed to send LINE broadcast message:', error);
   }
 }

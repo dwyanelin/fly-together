@@ -16,7 +16,6 @@ export const config = {
   serpApiKey: process.env.SERPAPI_KEY || '',
   // LINE Messaging API settings (from environment variables)
   lineChannelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN || '',
-  lineUserId: process.env.LINE_USER_ID || '',
   
   // Date settings (Targeting +30 days outbound, +38 days return)
   daysToOutbound: 30,
