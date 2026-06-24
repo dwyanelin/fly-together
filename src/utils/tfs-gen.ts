@@ -1,3 +1,9 @@
+/**
+ * ⚠️ FRAGILE — Reverse-engineered Google Flights protobuf URL encoding.
+ * This is NOT an official API. Google may change the encoding format at any time,
+ * which would break the generated URLs. If links stop working, this file is the
+ * most likely culprit. Test by opening a generated URL in a browser.
+ */
 export function generateGoogleFlightsUrl(
   dep: string,
   arr: string,

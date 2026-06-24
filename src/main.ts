@@ -1,7 +1,7 @@
 import { config } from './config.js';
-import { getRelativeDate } from './utils/date.js';
 import { fetchMatchingFlights } from './services/serpapi.js';
-import { sendLineMessage } from './services/linemessaging.js';
+import { sendFlexMessage } from './services/linemessaging.js';
+import { buildFlexBubble, buildCarouselMessage } from './services/flex-builder.js';
 
 async function main() {
   console.log('--- Starting Flight Tracker ---');
@@ -11,14 +11,16 @@ async function main() {
     process.exit(1);
   }
 
-  const outboundDate = getRelativeDate(config.daysToOutbound);
-  const returnDate = getRelativeDate(config.daysToReturn);
+  const { outboundDate, returnDate } = config;
 
   console.log(`Checking flights for: Outbound: ${outboundDate} | Return: ${returnDate}`);
 
-  let notifications: string[] = [];
+  const bubbles: object[] = [];
+  let routesSearched = 0;
+  let totalMatches = 0;
 
   for (const target of config.targets) {
+    routesSearched++;
     console.log(`\nFetching prices for ${target.name} (${target.departure_id} -> ${target.arrival_id})...`);
     if (target.allowedAirlines && target.allowedAirlines.length > 0) {
       console.log(`Allowed airlines: ${target.allowedAirlines.map(a => a.codes.join('/')).join(', ')}`);
@@ -40,22 +42,22 @@ async function main() {
       const affordableFlights = results.filter(f => f.price <= target.maxPrice);
 
       if (affordableFlights.length > 0) {
+        totalMatches += affordableFlights.length;
         console.log(`Found ${affordableFlights.length} affordable flight option(s) for ${target.name}.`);
         
-        // Show all results that matched filter without grouping
-        const flightDetails = affordableFlights.map(f => {
-          // Format date to remove Year/Month to keep lines shorter, e.g. "2026-05-02 08:30" => "05-02 08:30"
-          const outTime = f.outboundTime === 'Unknown' ? '未知' : f.outboundTime.substring(5);
-          
-          return `- ${f.airline} (出發 ${outTime}): ${config.currency} ${f.price}`;
-        }).join('\n');
-
-        notifications.push(
-          `✈️ 發現前往 ${target.name} 的達標機票！\n` +
-          `📅 日期：${outboundDate} 到 ${returnDate}\n\n` +
-          `💡 符合條件的選擇：\n${flightDetails}\n\n` +
-          `🔗 立即搶票：${affordableFlights[0].link}`
-        );
+        const bubble = buildFlexBubble({
+          targetName: target.name,
+          outboundDate,
+          returnDate,
+          currency: config.currency,
+          flights: affordableFlights.map(f => ({
+            airline: f.airline,
+            outboundTime: f.outboundTime,
+            price: f.price
+          })),
+          bookingLink: affordableFlights[0].link
+        });
+        bubbles.push(bubble);
       } else {
         console.log(`No flights under ${target.maxPrice} found for ${target.name}. Cheapest was ${config.currency} ${results[0].price}.`);
       }
@@ -64,19 +66,26 @@ async function main() {
     }
   }
 
-  // Send combined notifications if any targets match
-  if (notifications.length > 0) {
-    console.log('\nSending LINE Notifications...');
-    const message = '\n\n' + notifications.join('\n\n---\n\n');
-    await sendLineMessage(config.lineChannelAccessToken, message);
+  // Send Flex Message if any targets match
+  if (bubbles.length > 0) {
+    console.log('\nSending LINE Flex Message...');
+    const flexMessage = buildCarouselMessage(bubbles);
+    try {
+      await sendFlexMessage(config.lineChannelAccessToken, flexMessage, config.lineUserId);
+    } catch (error) {
+      console.error('LINE notification failed:', error);
+    }
   } else {
     console.log('\nNo matching flights found. Notification skipped.');
   }
 
-  console.log('\n--- Finished Flight Tracker ---');
+  // Summary
+  console.log(`\n📊 Summary: searched ${routesSearched} routes, found ${totalMatches} affordable flights, sent ${bubbles.length > 0 ? 1 : 0} notification(s).`);
+  console.log('--- Finished Flight Tracker ---');
 }
 
 // Execute logic
 main().catch(err => {
   console.error('Unhandled error in main execution:', err);
+  process.exit(1);
 });

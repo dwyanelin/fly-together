@@ -11,6 +11,21 @@ export interface TargetConfig {
   allowedAirlines?: AirlineConfig[]; // Allowed airlines to filter
 }
 
+export interface RouteEntry {
+  name: string;
+  departure_id: string;
+  arrival_id: string;
+  maxPrice: number;
+  airlinePreset: string;
+}
+
+export interface RoutesConfig {
+  outboundDate: string;
+  returnDate: string;
+  currency: string;
+  targets: RouteEntry[];
+}
+
 export interface SerpApiFlightResult {
   price: number;
   type?: string;

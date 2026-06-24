@@ -1,56 +1,45 @@
 import * as dotenv from 'dotenv';
 dotenv.config();
 
-import { TargetConfig } from './types.js';
+import { readFileSync } from 'fs';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
+import { TargetConfig, AirlineConfig, RoutesConfig } from './types.js';
 
-const allowedTraditionalAirlines = [
-  { codes: ['CI'], patterns: ['China Airlines', '中華航空'] },
-  { codes: ['BR'], patterns: ['EVA Air', '長榮航空'] },
-  { codes: ['JX'], patterns: ['STARLUX Airlines', '星宇航空'] },
-  { codes: ['JL'], patterns: ['Japan Airlines', '日本航空', 'JAL'] },
-  { codes: ['NH'], patterns: ['All Nippon Airways', '全日空', 'ANA'] }
-];
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Airline presets — complex structures stay in code, referenced by name in JSON
+const airlinePresets: Record<string, AirlineConfig[]> = {
+  traditional: [
+    { codes: ['CI'], patterns: ['China Airlines', '中華航空'] },
+    { codes: ['BR'], patterns: ['EVA Air', '長榮航空'] },
+    { codes: ['JX'], patterns: ['STARLUX Airlines', '星宇航空'] },
+    { codes: ['JL'], patterns: ['Japan Airlines', '日本航空', 'JAL'] },
+    { codes: ['NH'], patterns: ['All Nippon Airways', '全日空', 'ANA'] }
+  ]
+};
+
+// Read external config
+const routesPath = resolve(__dirname, '..', 'config', 'routes.json');
+const routesJson: RoutesConfig = JSON.parse(readFileSync(routesPath, 'utf-8'));
+
+// Resolve preset names to actual airline configs
+const targets: TargetConfig[] = routesJson.targets.map(t => ({
+  name: t.name,
+  departure_id: t.departure_id,
+  arrival_id: t.arrival_id,
+  maxPrice: t.maxPrice,
+  allowedAirlines: airlinePresets[t.airlinePreset]
+}));
 
 export const config = {
-  // SerpApi API key (from environment variables)
   serpApiKey: process.env.SERPAPI_KEY || '',
-  // LINE Messaging API settings (from environment variables)
   lineChannelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN || '',
-  
-  // Date settings (Targeting +30 days outbound, +38 days return)
-  daysToOutbound: 30,
-  daysToReturn: 38,
-  currency: 'TWD',
-  
-  // Destinations and their thresholds
-  targets: [
-    {
-      name: '東京(成田)',
-      departure_id: 'TPE',
-      arrival_id: 'NRT',
-      maxPrice: 13000,
-      allowedAirlines: allowedTraditionalAirlines
-    },
-    {
-      name: '東京(羽田)',
-      departure_id: 'TSA', // Taipei Songshan is for HND flights
-      arrival_id: 'HND',
-      maxPrice: 13000,
-      allowedAirlines: allowedTraditionalAirlines
-    },
-    {
-      name: '福岡',
-      departure_id: 'TPE',
-      arrival_id: 'FUK',
-      maxPrice: 12000,
-      allowedAirlines: allowedTraditionalAirlines
-    },
-    {
-      name: '峇里島',
-      departure_id: 'TPE',
-      arrival_id: 'DPS',
-      maxPrice: 17000,
-      allowedAirlines: allowedTraditionalAirlines
-    }
-  ] as TargetConfig[]
+  // Set to push only to your own account (testing); leave empty to broadcast to all friends.
+  lineUserId: process.env.LINE_USER_ID || '',
+  outboundDate: routesJson.outboundDate,
+  returnDate: routesJson.returnDate,
+  currency: routesJson.currency,
+  targets
 };

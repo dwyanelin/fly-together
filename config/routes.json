@@ -1,0 +1,35 @@
+{
+  "outboundDate": "2026-10-24",
+  "returnDate": "2026-11-01",
+  "currency": "TWD",
+  "targets": [
+    {
+      "name": "東京(成田)",
+      "departure_id": "TPE",
+      "arrival_id": "NRT",
+      "maxPrice": 18000,
+      "airlinePreset": "traditional"
+    },
+    {
+      "name": "東京(羽田)",
+      "departure_id": "TSA",
+      "arrival_id": "HND",
+      "maxPrice": 13000,
+      "airlinePreset": "traditional"
+    },
+    {
+      "name": "福岡",
+      "departure_id": "TPE",
+      "arrival_id": "FUK",
+      "maxPrice": 12000,
+      "airlinePreset": "traditional"
+    },
+    {
+      "name": "峇里島",
+      "departure_id": "TPE",
+      "arrival_id": "DPS",
+      "maxPrice": 17000,
+      "airlinePreset": "traditional"
+    }
+  ]
+}
