@@ -17,16 +17,18 @@
 git clone https://github.com/YOUR_USERNAME/FlyTogether.git
 cd FlyTogether
 
-# 2. 安裝依賴
-npm install
+# 2. 安裝依賴（使用 pnpm）
+pnpm install
 
 # 3. 設定環境變數
 cp .env.example .env
 # 編輯 .env，填入你的 API keys
 
 # 4. 執行
-npm run dev
+pnpm dev
 ```
+
+> 本專案使用 **pnpm** 作為套件管理工具。若尚未安裝：`npm install -g pnpm` 或 `corepack enable pnpm`。
 
 ## 環境變數
 
@@ -34,6 +36,32 @@ npm run dev
 |------|------|----------|
 | `SERPAPI_KEY` | SerpApi API Key（必填） | [serpapi.com](https://serpapi.com) 註冊取得 |
 | `LINE_CHANNEL_ACCESS_TOKEN` | LINE Messaging API Token（選填） | [LINE Developers Console](https://developers.line.biz) 建立 Bot 取得 |
+| `LINE_USER_ID` | 測試用：只推播給你個人帳號（選填） | 見下方「[測試：只通知自己](#測試只通知自己)」 |
+
+## 測試：只通知自己
+
+預設情況下，通知會以 **broadcast** 發送給此 LINE 官方帳號的「所有好友」。測試時若只想推播到你個人的 LINE，設定 `LINE_USER_ID` 即可——程式會自動改用 **push** API，只發給該使用者。
+
+```bash
+# .env
+LINE_USER_ID=U1234567890abcdef...   # 你的 LINE userId（U 開頭）
+```
+
+**行為切換：**
+
+| `LINE_USER_ID` | 發送方式 | 對象 |
+|----------------|----------|------|
+| 有設定 | push | 只有你自己 |
+| 留空 / 未設定 | broadcast | 官方帳號所有好友 |
+
+**如何取得你的 `userId`：**
+
+1. 用你個人 LINE 加此官方帳號為好友（掃 LINE Developers Console → Messaging API 頁的 QR code）。
+2. 取得 userId（U 開頭的字串，**不是** LINE ID）：
+   - **最快**：LINE Developers Console → 你的 channel → **Basic settings** → **Your user ID**。
+   - 或設定 webhook，從加好友 / 傳訊事件的 `source.userId` 取得。
+
+> 正式上線要廣播給所有好友時，把 `LINE_USER_ID` 拿掉或留空即可，無需改程式。
 
 ## 設定航線
 
@@ -70,10 +98,10 @@ npm run dev
 ## Scripts
 
 ```bash
-npm run build   # 編譯 TypeScript → dist/
-npm run start   # 執行編譯後的程式
-npm run dev     # 直接執行 TypeScript（開發用）
-npm test        # 執行測試
+pnpm build   # 編譯 TypeScript → dist/
+pnpm start   # 執行編譯後的程式
+pnpm dev     # 直接執行 TypeScript（開發用）
+pnpm test    # 執行測試
 ```
 
 ## GitHub Actions 排程
@@ -83,6 +111,7 @@ npm test        # 執行測試
 需在 GitHub repo 的 **Settings → Secrets and variables → Actions** 新增：
 - `SERPAPI_KEY`
 - `LINE_CHANNEL_ACCESS_TOKEN`
+- `LINE_USER_ID`（選填，設定後 CI 也只推播給你個人帳號）
 
 也可透過 **Actions → Flight Price Monitor → Run workflow** 手動觸發。
 
@@ -98,14 +127,14 @@ src/
 │   ├── linemessaging.ts      # LINE Messaging API 發送
 │   └── flex-builder.ts       # LINE Flex Message 卡片組裝
 └── utils/
-    ├── date.ts               # 日期工具
     └── tfs-gen.ts            # Google Flights URL 編碼（⚠️ 逆向工程）
 ```
 
 ## Tech Stack
 
 - **Runtime**: Node.js + TypeScript (ESM)
+- **Package Manager**: pnpm
 - **Flight Data**: SerpApi (Google Flights engine)
-- **Notifications**: LINE Messaging API (Broadcast + Flex Message)
+- **Notifications**: LINE Messaging API (Broadcast / Push + Flex Message)
 - **Scheduling**: GitHub Actions cron
 - **Testing**: Vitest
