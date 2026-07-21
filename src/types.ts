@@ -3,27 +3,29 @@ export interface AirlineConfig {
   patterns: string[]; // e.g. ['EVA Air', '長榮航空']
 }
 
-export interface TargetConfig {
-  name: string;
-  departure_id: string; // ex: TPE
-  arrival_id: string;   // ex: TYO
-  maxPrice: number;     // ex: 13000
-  allowedAirlines?: AirlineConfig[]; // Allowed airlines to filter
+// A resolved route ready for searching — dates are per-route because
+// users configure each route (with its own dates) via the LINE form.
+export interface RouteConfig {
+  name: string;         // display name derived from arrival IATA code
+  departure_id: string; // TPE | TSA
+  arrival_id: string;   // ex: NRT
+  outboundDate: string; // YYYY-MM-DD
+  returnDate: string;   // YYYY-MM-DD
+  maxPrice: number;     // ex: 13000 (TWD)
+  allowedAirlines?: AirlineConfig[];
 }
 
-export interface RouteEntry {
-  name: string;
+// Raw route row as stored in the shared routes table (Apps Script / routes.json)
+export interface RawRoute {
+  outboundDate: string;
+  returnDate: string;
   departure_id: string;
   arrival_id: string;
   maxPrice: number;
-  airlinePreset: string;
 }
 
-export interface RoutesConfig {
-  outboundDate: string;
-  returnDate: string;
-  currency: string;
-  targets: RouteEntry[];
+export interface RoutesPayload {
+  routes: RawRoute[];
 }
 
 export interface SerpApiFlightResult {

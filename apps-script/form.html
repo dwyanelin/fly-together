@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>FlyTogether 航班追蹤設定</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, "PingFang TC", "Noto Sans TC", sans-serif;
+      background: #f5f7f6; color: #222; padding: 16px; max-width: 480px; margin: 0 auto;
+    }
+    h1 { font-size: 20px; margin: 8px 0 4px; }
+    .subtitle { font-size: 13px; color: #888; margin-bottom: 16px; }
+    .card { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+    .card h2 { font-size: 14px; color: #1DB446; margin-bottom: 10px; }
+    .slot { font-size: 13px; padding: 8px 10px; border-radius: 8px; background: #f0f7f2; margin-bottom: 6px; }
+    .slot.empty { background: #f3f3f3; color: #aaa; }
+    label { display: block; font-size: 13px; color: #555; margin: 12px 0 4px; }
+    select, input {
+      width: 100%; padding: 10px; font-size: 15px;
+      border: 1px solid #ddd; border-radius: 8px; background: #fff;
+    }
+    .row { display: flex; gap: 10px; }
+    .row > div { flex: 1; }
+    button {
+      width: 100%; padding: 13px; margin-top: 18px; font-size: 16px; font-weight: bold;
+      color: #fff; background: #1DB446; border: none; border-radius: 10px;
+    }
+    button:disabled { background: #a8d8b5; }
+    #message { margin-top: 12px; font-size: 14px; text-align: center; min-height: 20px; }
+    #message.ok { color: #1DB446; }
+    #message.error { color: #d33; }
+    .hint { font-size: 12px; color: #aaa; margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <h1>✈️ FlyTogether 航班追蹤</h1>
+  <p class="subtitle">設定想追蹤的航線，低於門檻價就用 LINE 通知大家</p>
+
+  <div class="card">
+    <h2>目前追蹤中的路線（共 2 格，新設定會覆蓋最舊的）</h2>
+    <div id="slots"><div class="slot empty">載入中…</div></div>
+  </div>
+
+  <div class="card">
+    <h2>新增 / 更新一條路線</h2>
+
+    <label>出發機場</label>
+    <select id="departure">
+      <option value="TPE">TPE — 台北桃園</option>
+      <option value="TSA">TSA — 台北松山</option>
+    </select>
+
+    <label>抵達機場</label>
+    <input id="arrival" list="airports" placeholder="選擇或輸入 3 碼代碼（如 NRT）"
+           maxlength="3" autocapitalize="characters" autocomplete="off">
+    <datalist id="airports">
+      <option value="NRT">東京（成田）</option>
+      <option value="HND">東京（羽田）</option>
+      <option value="KIX">大阪（關西）</option>
+      <option value="NGO">名古屋（中部）</option>
+      <option value="FUK">福岡</option>
+      <option value="CTS">札幌（新千歲）</option>
+      <option value="OKA">沖繩（那霸）</option>
+      <option value="ICN">首爾（仁川）</option>
+      <option value="GMP">首爾（金浦）</option>
+      <option value="PUS">釜山</option>
+      <option value="HKG">香港</option>
+      <option value="MFM">澳門</option>
+      <option value="BKK">曼谷（蘇凡納布）</option>
+      <option value="DMK">曼谷（廊曼）</option>
+      <option value="SIN">新加坡</option>
+      <option value="KUL">吉隆坡</option>
+      <option value="DPS">峇里島</option>
+      <option value="MNL">馬尼拉</option>
+      <option value="CEB">宿霧</option>
+      <option value="SGN">胡志明市</option>
+      <option value="HAN">河內</option>
+      <option value="DAD">峴港</option>
+      <option value="PVG">上海（浦東）</option>
+    </datalist>
+    <p class="hint">也可輸入清單以外的任何 IATA 機場代碼</p>
+
+    <div class="row">
+      <div>
+        <label>出發日期</label>
+        <input id="outboundDate" type="date">
+      </div>
+      <div>
+        <label>回程日期</label>
+        <input id="returnDate" type="date">
+      </div>
+    </div>
+
+    <label>價格門檻（TWD，來回含稅低於此價才通知）</label>
+    <input id="maxPrice" type="number" inputmode="numeric" min="1" step="1" placeholder="例如 13000">
+
+    <button id="submit" onclick="submitForm()">儲存設定</button>
+    <p id="message"></p>
+  </div>
+
+  <script>
+    function renderSlots(routes) {
+      var el = document.getElementById('slots');
+      var html = '';
+      for (var i = 0; i < 2; i++) {
+        var r = routes && routes[i];
+        html += r
+          ? '<div class="slot">' + r.departure_id + ' → ' + r.arrival_id +
+            '　' + r.outboundDate + ' ~ ' + r.returnDate +
+            '　< NT$' + Number(r.maxPrice).toLocaleString() + '</div>'
+          : '<div class="slot empty">（空）</div>';
+      }
+      el.innerHTML = html;
+    }
+
+    function showMessage(text, isError) {
+      var el = document.getElementById('message');
+      el.textContent = text;
+      el.className = isError ? 'error' : 'ok';
+    }
+
+    function submitForm() {
+      var data = {
+        departure_id: document.getElementById('departure').value,
+        arrival_id: document.getElementById('arrival').value.trim().toUpperCase(),
+        outboundDate: document.getElementById('outboundDate').value,
+        returnDate: document.getElementById('returnDate').value,
+        maxPrice: document.getElementById('maxPrice').value
+      };
+
+      var btn = document.getElementById('submit');
+      btn.disabled = true;
+      showMessage('儲存中…', false);
+
+      google.script.run
+        .withSuccessHandler(function (res) {
+          btn.disabled = false;
+          showMessage(res.message, !res.ok);
+          if (res.ok) renderSlots(res.routes);
+        })
+        .withFailureHandler(function (err) {
+          btn.disabled = false;
+          showMessage('儲存失敗：' + err.message, true);
+        })
+        .submitRoute(data);
+    }
+
+    // 載入現有設定
+    google.script.run
+      .withSuccessHandler(renderSlots)
+      .withFailureHandler(function () { renderSlots([]); })
+      .getRoutes();
+
+    // 日期欄預設範圍：今天起
+    var today = new Date().toISOString().slice(0, 10);
+    document.getElementById('outboundDate').min = today;
+    document.getElementById('returnDate').min = today;
+  </script>
+</body>
+</html>

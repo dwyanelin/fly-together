@@ -7,7 +7,8 @@
     "build": "tsc",
     "start": "node dist/main.js",
     "dev": "tsx src/main.ts",
-    "test": "vitest run"
+    "test": "vitest run",
+    "setup:richmenu": "tsx scripts/setup-richmenu.ts"
   },
   "keywords": [],
   "author": "",

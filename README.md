@@ -4,11 +4,27 @@
 
 ## 功能
 
-- 自動搜尋多條航線（透過 [SerpApi](https://serpapi.com) Google Flights 引擎）
-- 僅篩選直飛 + 指定航空公司（傳統航空）
-- 價格低於設定門檻時，透過 LINE Flex Message 推播通知
+- **在 LINE 裡直接設定追蹤航線**：點聊天室底部圖文選單 → 開表單選機場/日期/價格門檻
+- 自動搜尋設定的航線（透過 [SerpApi](https://serpapi.com) Google Flights 引擎）
+- 僅篩選直飛 + 指定航空公司（傳統航空：華航/長榮/星宇/日航/全日空）
+- 價格低於設定門檻時，透過 LINE Flex Message 推播通知（broadcast 給所有好友）
 - 通知卡片包含航空公司、出發時間、價格，一鍵連結至 Google Flights
-- GitHub Actions 自動排程（每日三次：台灣時間 08:00 / 15:00 / 22:00）
+- GitHub Actions 自動排程（每日四次：台灣時間 08:00 / 12:00 / 17:00 / 22:00）
+- 全域共用 2 個路線名額（新設定覆蓋最舊）：2 條 × 4 次/天 × 31 天 = 248 次/月，控制在 SerpApi 免費額度 250 內
+
+## 系統架構
+
+```
+使用者 LINE 聊天室
+  └─ 圖文選單「✈️ 設定航班追蹤」→ 開啟表單（LINE 內建瀏覽器）
+       └─ Google Apps Script Web App
+            ├─ doGet            → 表單頁（apps-script/form.html）
+            ├─ submitRoute      → 驗證後寫入 Google Sheet（上限 2 格，覆蓋最舊）
+            └─ doGet?action=list → routes JSON
+                 ▲
+GitHub Actions cron（每日 4 次）
+  └─ 讀 routes JSON → SerpApi 搜尋 → 達標 → LINE broadcast 通知
+```
 
 ## 快速開始
 
@@ -37,6 +53,7 @@ pnpm dev
 | `SERPAPI_KEY` | SerpApi API Key（必填） | [serpapi.com](https://serpapi.com) 註冊取得 |
 | `LINE_CHANNEL_ACCESS_TOKEN` | LINE Messaging API Token（選填） | [LINE Developers Console](https://developers.line.biz) 建立 Bot 取得 |
 | `LINE_USER_ID` | 測試用：只推播給你個人帳號（選填） | 見下方「[測試：只通知自己](#測試只通知自己)」 |
+| `ROUTES_API_URL` | Apps Script Web App 的 `/exec` URL（選填） | 見下方「[透過 LINE 設定航線](#透過-line-設定航線一次性部署)」；未設定時改讀本地 `config/routes.json` |
 
 ## 測試：只通知自己
 
@@ -63,54 +80,84 @@ LINE_USER_ID=U1234567890abcdef...   # 你的 LINE userId（U 開頭）
 
 > 正式上線要廣播給所有好友時，把 `LINE_USER_ID` 拿掉或留空即可，無需改程式。
 
-## 設定航線
+## 透過 LINE 設定航線（一次性部署）
 
-編輯 `config/routes.json`：
+日常設定完全在 LINE 裡完成；以下部署步驟只需做一次。
+
+### Step 1 — 部署 Google Apps Script
+
+1. 到 [script.google.com](https://script.google.com) → 新增專案，命名如 `FlyTogether Routes`。
+2. 把 `apps-script/Code.gs` 的內容貼進 `Code.gs`。
+3. 新增 HTML 檔案命名為 `form`，貼上 `apps-script/form.html` 的內容。
+4. 部署 → 新增部署作業 → 類型「網頁應用程式」→ 執行身分「我」、存取權「**任何人**」→ 部署。
+5. 複製產生的 **Web App URL**（`https://script.google.com/macros/s/.../exec`）。
+   - 首次使用會自動建立名為「FlyTogether Routes」的 Google Sheet 存放路線資料。
+
+### Step 2 — 填入 URL
+
+```bash
+# .env（本機）
+ROUTES_API_URL=https://script.google.com/macros/s/XXXX/exec
+
+# GitHub repo → Settings → Secrets and variables → Actions
+# 新增 secret：ROUTES_API_URL（同上值）
+```
+
+### Step 3 — 建立 LINE 圖文選單
+
+```bash
+pnpm setup:richmenu
+```
+
+會自動：刪除舊選單 → 建立「✈️ 設定航班追蹤」選單 → 上傳 `assets/richmenu.png` → 設為所有好友的預設選單。之後好友在聊天室底部點選單即可開表單設定。
+
+### 使用者可設定的欄位
+
+| 欄位 | 限制 |
+|------|------|
+| 出發機場 | 僅 `TPE`（桃園）/ `TSA`（松山） |
+| 抵達機場 | 任意 3 碼 IATA 代碼（表單附常用清單） |
+| 出發 / 回程日期 | 回程需晚於出發，出發不可為過去 |
+| 價格門檻 | 正整數（TWD），來回含稅低於此價才通知 |
+
+幣別固定 TWD、航空公司固定傳統航空、通知卡片的目的地名稱由代碼自動推導（`src/utils/airports.ts`）。
+
+### 本地 fallback：`config/routes.json`
+
+未設定 `ROUTES_API_URL` 時（本機開發），改讀 `config/routes.json`：
 
 ```json
 {
-  "outboundDate": "2026-10-24",
-  "returnDate": "2026-11-01",
-  "currency": "TWD",
-  "targets": [
+  "routes": [
     {
-      "name": "東京(成田)",
+      "outboundDate": "2026-10-24",
+      "returnDate": "2026-11-01",
       "departure_id": "TPE",
       "arrival_id": "NRT",
-      "maxPrice": 13000,
-      "airlinePreset": "traditional"
+      "maxPrice": 13000
     }
   ]
 }
 ```
 
-| 欄位 | 說明 |
-|------|------|
-| `outboundDate` | 出發日期（YYYY-MM-DD） |
-| `returnDate` | 回程日期（YYYY-MM-DD） |
-| `currency` | 幣別（TWD / USD / JPY 等） |
-| `name` | 目的地顯示名稱 |
-| `departure_id` | 出發機場 IATA 代碼 |
-| `arrival_id` | 抵達機場 IATA 代碼 |
-| `maxPrice` | 價格門檻（超過此價不通知） |
-| `airlinePreset` | 航空公司篩選（目前僅支援 `traditional`：華航/長榮/星宇/日航/全日空） |
-
 ## Scripts
 
 ```bash
-pnpm build   # 編譯 TypeScript → dist/
-pnpm start   # 執行編譯後的程式
-pnpm dev     # 直接執行 TypeScript（開發用）
-pnpm test    # 執行測試
+pnpm build           # 編譯 TypeScript → dist/
+pnpm start           # 執行編譯後的程式
+pnpm dev             # 直接執行 TypeScript（開發用）
+pnpm test            # 執行測試
+pnpm setup:richmenu  # 建立/重建 LINE 圖文選單（一次性）
 ```
 
 ## GitHub Actions 排程
 
-已設定 `.github/workflows/cron.yml`，每日自動執行三次。
+已設定 `.github/workflows/cron.yml`，每日自動執行四次（台灣時間 08:00 / 12:00 / 17:00 / 22:00）。
 
 需在 GitHub repo 的 **Settings → Secrets and variables → Actions** 新增：
 - `SERPAPI_KEY`
 - `LINE_CHANNEL_ACCESS_TOKEN`
+- `ROUTES_API_URL`（Apps Script 部署後的 /exec URL）
 - `LINE_USER_ID`（選填，設定後 CI 也只推播給你個人帳號）
 
 也可透過 **Actions → Flight Price Monitor → Run workflow** 手動觸發。
@@ -119,7 +166,7 @@ pnpm test    # 執行測試
 
 ```
 src/
-├── config.ts                 # 讀取 config/routes.json + 環境變數
+├── config.ts                 # 載入設定：ROUTES_API_URL（共用表）或 config/routes.json（fallback）
 ├── main.ts                   # 主流程：搜尋 → 篩選 → 組裝通知 → 發送
 ├── types.ts                  # TypeScript 型別定義
 ├── services/
@@ -127,13 +174,22 @@ src/
 │   ├── linemessaging.ts      # LINE Messaging API 發送
 │   └── flex-builder.ts       # LINE Flex Message 卡片組裝
 └── utils/
+    ├── airports.ts           # IATA 代碼 → 顯示名稱對照
     └── tfs-gen.ts            # Google Flights URL 編碼（⚠️ 逆向工程）
+apps-script/
+├── Code.gs                   # Apps Script 後端：表單頁 / 寫入 Sheet / routes JSON API
+└── form.html                 # LINE 內開啟的設定表單
+scripts/
+└── setup-richmenu.ts         # 建立 LINE 圖文選單（一次性）
+assets/
+└── richmenu.png              # 圖文選單圖片（2500×843）
 ```
 
 ## Tech Stack
 
 - **Runtime**: Node.js + TypeScript (ESM)
 - **Package Manager**: pnpm
+- **Routes 設定**: LINE Rich Menu → Google Apps Script 表單 → Google Sheet
 - **Flight Data**: SerpApi (Google Flights engine)
 - **Notifications**: LINE Messaging API (Broadcast / Push + Flex Message)
 - **Scheduling**: GitHub Actions cron

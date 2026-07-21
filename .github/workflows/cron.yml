@@ -2,9 +2,10 @@ name: Flight Price Monitor
 
 on:
   schedule:
-    # Runs at 00:00, 07:00, and 14:00 UTC every day
-    # Equivalent to 08:00, 15:00, and 22:00 Taiwan Time (UTC+8)
-    - cron: '0 0,7,14 * * *'
+    # Runs at 00:00, 04:00, 09:00, and 14:00 UTC every day
+    # Equivalent to 08:00, 12:00, 17:00, and 22:00 Taiwan Time (UTC+8)
+    # Quota: 2 routes × 4 runs/day × 31 days = 248 SerpApi calls/month (free tier: 250)
+    - cron: '0 0,4,9,14 * * *'
   workflow_dispatch:
     # Allow manual trigger
 
@@ -38,3 +39,4 @@ jobs:
           SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
           LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
           LINE_USER_ID: ${{ secrets.LINE_USER_ID }}
+          ROUTES_API_URL: ${{ secrets.ROUTES_API_URL }}
