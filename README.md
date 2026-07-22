@@ -1,4 +1,4 @@
-# ✈️ FlyTogether
+# ✈️ fly-together
 
 定期搜尋符合條件的機票，透過 LINE 推播卡片通知，附上 Google Flights 訂票連結。
 
@@ -30,8 +30,8 @@ GitHub Actions cron（每日 4 次）
 
 ```bash
 # 1. Clone
-git clone https://github.com/YOUR_USERNAME/FlyTogether.git
-cd FlyTogether
+git clone https://github.com/YOUR_USERNAME/fly-together.git
+cd fly-together
 
 # 2. 安裝依賴（使用 pnpm）
 pnpm install
@@ -86,12 +86,12 @@ LINE_USER_ID=U1234567890abcdef...   # 你的 LINE userId（U 開頭）
 
 ### Step 1 — 部署 Google Apps Script
 
-1. 到 [script.google.com](https://script.google.com) → 新增專案，命名如 `FlyTogether Routes`。
+1. 到 [script.google.com](https://script.google.com) → 新增專案，命名如 `fly-together-routes`。
 2. 把 `apps-script/Code.gs` 的內容貼進 `Code.gs`。
 3. 新增 HTML 檔案命名為 `form`，貼上 `apps-script/form.html` 的內容。
 4. 部署 → 新增部署作業 → 類型「網頁應用程式」→ 執行身分「我」、存取權「**任何人**」→ 部署。
 5. 複製產生的 **Web App URL**（`https://script.google.com/macros/s/.../exec`）。
-   - 首次使用會自動建立名為「FlyTogether Routes」的 Google Sheet 存放路線資料。
+   - 首次使用會自動建立名為「fly-together-routes」的 Google Sheet 存放路線資料。
 
 ### Step 2 — 填入 URL
 

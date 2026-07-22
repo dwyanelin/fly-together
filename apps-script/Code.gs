@@ -1,5 +1,5 @@
 /**
- * FlyTogether — LINE 航班追蹤設定後端（Google Apps Script）
+ * fly-together — LINE 航班追蹤設定後端（Google Apps Script）
  *
  * 部署方式見專案 README「透過 LINE 設定航線」一節。
  * 職責：
@@ -129,7 +129,7 @@ function getOrCreateSheet_() {
   if (sheetId) {
     spreadsheet = SpreadsheetApp.openById(sheetId);
   } else {
-    spreadsheet = SpreadsheetApp.create('FlyTogether Routes');
+    spreadsheet = SpreadsheetApp.create('fly-together-routes');
     props.setProperty('SHEET_ID', spreadsheet.getId());
   }
 

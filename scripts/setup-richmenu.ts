@@ -21,7 +21,9 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const API = 'https://api.line.me/v2/bot';
 const DATA_API = 'https://api-data.line.me/v2/bot';
-const MENU_NAME = 'flytogether-settings';
+const MENU_NAME = 'fly-together-settings';
+// 舊版選單名稱，重跑時一併清除
+const LEGACY_MENU_NAMES = ['flytogether-settings'];
 
 const token = process.env.LINE_CHANNEL_ACCESS_TOKEN;
 const formUrl = process.env.ROUTES_API_URL;
@@ -35,9 +37,9 @@ async function main() {
   // 1. 刪除舊的同名選單（idempotent）
   const { data: existing } = await axios.get(`${API}/richmenu/list`, { headers });
   for (const menu of existing.richmenus ?? []) {
-    if (menu.name === MENU_NAME) {
+    if (menu.name === MENU_NAME || LEGACY_MENU_NAMES.includes(menu.name)) {
       await axios.delete(`${API}/richmenu/${menu.richMenuId}`, { headers });
-      console.log(`Deleted old rich menu ${menu.richMenuId}`);
+      console.log(`Deleted old rich menu ${menu.richMenuId} (${menu.name})`);
     }
   }
 
