@@ -4,16 +4,24 @@
  * 部署方式見專案 README「透過 LINE 設定航線」一節。
  * 職責：
  *   1. doGet()                → 回傳設定表單頁（由 LINE 圖文選單開啟）
- *   2. doGet(?action=list)    → 回傳 routes JSON（給 GitHub Actions cron 讀取）
+ *   2. doGet(?action=list)    → 回傳 routes JSON（給 GitHub Actions 讀取）
  *   3. submitRoute(data)      → 表單送出：驗證後寫入 Google Sheet（上限 2 格，覆蓋最舊）
+ *   4. triggerFlightMonitor() → 定時呼叫 GitHub Actions workflow_dispatch（避開 60 天停用限制）
+ *   5. setupMonitorTriggers() → 一次性建立每日 4 次台灣時間觸發條件（08/12/17/22 點）
  *
- * 資料存放：自動建立的 Google Sheet（試算表 ID 記在 Script Properties，
- * 也可在 Apps Script 編輯器的「專案設定 → 指令碼屬性」看到 SHEET_ID）。
+ * 資料與設定存放：Script Properties（Apps Script 編輯器 → 專案設定 → 指令碼屬性）
+ *   - SHEET_ID     ：自動建立的 Google Sheet ID
+ *   - GITHUB_TOKEN ：Fine-grained PAT（需開 Actions: Read and write 權限）
  */
 
-var MAX_ROUTES = 2; // 全域路線上限：2 條 × 每天 4 次 cron × 31 天 = 248 次/月 < SerpApi 免費額度 250
+var MAX_ROUTES = 2; // 全域路線上限：2 條 × 每天 4 次排程 × 31 天 = 248 次/月 < SerpApi 免費額度 250
 var ALLOWED_DEPARTURES = ['TPE', 'TSA'];
 var HEADERS = ['outboundDate', 'returnDate', 'departure_id', 'arrival_id', 'maxPrice', 'updatedAt'];
+
+var DEFAULT_GITHUB_REPO = 'dwyanelin/fly-together';
+var DEFAULT_GITHUB_WORKFLOW = 'cron.yml';
+var DEFAULT_GITHUB_REF = 'main';
+var MONITOR_HOURS_TAIPEI = [8, 12, 17, 22];
 
 // ---------- Web entrypoints ----------
 
@@ -148,3 +156,68 @@ function toDateString_(value) {
   }
   return String(value);
 }
+
+// ---------- GitHub Actions Scheduler (Time-driven Trigger) ----------
+
+/**
+ * 呼叫 GitHub Actions workflow_dispatch 觸發航班監控。
+ * 需先在「專案設定 → 指令碼屬性」新增 GITHUB_TOKEN（Fine-grained PAT，權限 Actions: Read and write）。
+ * 選填屬性：GITHUB_REPO、GITHUB_WORKFLOW、GITHUB_REF。
+ */
+function triggerFlightMonitor() {
+  var props = PropertiesService.getScriptProperties();
+  var token = props.getProperty('GITHUB_TOKEN');
+  if (!token) {
+    throw new Error('尚未設定指令碼屬性 GITHUB_TOKEN（請至 專案設定 → 指令碼屬性 新增）');
+  }
+
+  var repo = props.getProperty('GITHUB_REPO') || DEFAULT_GITHUB_REPO;
+  var workflow = props.getProperty('GITHUB_WORKFLOW') || DEFAULT_GITHUB_WORKFLOW;
+  var ref = props.getProperty('GITHUB_REF') || DEFAULT_GITHUB_REF;
+
+  var url = 'https://api.github.com/repos/' + repo + '/actions/workflows/' + workflow + '/dispatches';
+  var res = UrlFetchApp.fetch(url, {
+    method: 'post',
+    contentType: 'application/json',
+    headers: {
+      Authorization: 'Bearer ' + token,
+      Accept: 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28'
+    },
+    payload: JSON.stringify({ ref: ref }),
+    muteHttpExceptions: true
+  });
+
+  var code = res.getResponseCode();
+  if (code !== 204) {
+    throw new Error('GitHub workflow_dispatch 觸發失敗 (HTTP ' + code + '): ' + res.getContentText());
+  }
+
+  Logger.log('Triggered GitHub Actions workflow: ' + repo + '/' + workflow + '@' + ref);
+}
+
+/**
+ * 一次性設定函式：在 Apps Script 編輯器手動執行一次即可。
+ * 會先清除既有的 triggerFlightMonitor 觸發條件（避免重複建立爆額度），
+ * 再建立每日台灣時間 08:00 / 12:00 / 17:00 / 22:00 四組排程。
+ */
+function setupMonitorTriggers() {
+  var existing = ScriptApp.getProjectTriggers();
+  for (var i = 0; i < existing.length; i++) {
+    if (existing[i].getHandlerFunction() === 'triggerFlightMonitor') {
+      ScriptApp.deleteTrigger(existing[i]);
+    }
+  }
+
+  for (var j = 0; j < MONITOR_HOURS_TAIPEI.length; j++) {
+    ScriptApp.newTrigger('triggerFlightMonitor')
+      .timeBased()
+      .everyDays(1)
+      .atHour(MONITOR_HOURS_TAIPEI[j])
+      .inTimezone('Asia/Taipei')
+      .create();
+  }
+
+  Logger.log('已建立 ' + MONITOR_HOURS_TAIPEI.length + ' 組每日排程（台灣時間 ' + MONITOR_HOURS_TAIPEI.join(':00 / ') + ':00）');
+}
+
