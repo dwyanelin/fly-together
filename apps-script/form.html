@@ -13,8 +13,21 @@
     .subtitle { font-size: 13px; color: #888; margin-bottom: 16px; }
     .card { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
     .card h2 { font-size: 14px; color: #1DB446; margin-bottom: 10px; }
-    .slot { font-size: 13px; padding: 8px 10px; border-radius: 8px; background: #f0f7f2; margin-bottom: 6px; }
+    .slot {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      font-size: 13px; padding: 8px 10px; border-radius: 8px; background: #f0f7f2; margin-bottom: 6px;
+    }
     .slot.empty { background: #f3f3f3; color: #aaa; }
+    .slot-text { flex: 1; line-height: 1.45; }
+    .delete-btn {
+      width: 28px; height: 28px; min-width: 28px; padding: 0; margin: 0;
+      display: inline-flex; align-items: center; justify-content: center;
+      background: transparent; color: #888; border: none; border-radius: 50%;
+      font-size: 18px; line-height: 1; cursor: pointer;
+      transition: background .15s, color .15s;
+    }
+    .delete-btn:hover, .delete-btn:active { background: rgba(211, 51, 51, 0.12); color: #d33; }
+    .delete-btn:disabled { opacity: 0.4; cursor: default; background: transparent; color: #888; }
     label { display: block; font-size: 13px; color: #555; margin: 12px 0 4px; }
     select, input {
       width: 100%; padding: 10px; font-size: 15px;
@@ -22,15 +35,14 @@
     }
     .row { display: flex; gap: 10px; }
     .row > div { flex: 1; }
-    button {
+    #submit {
       width: 100%; padding: 13px; margin-top: 18px; font-size: 16px; font-weight: bold;
-      color: #fff; background: #1DB446; border: none; border-radius: 10px;
+      color: #fff; background: #1DB446; border: none; border-radius: 10px; cursor: pointer;
     }
-    button:disabled { background: #a8d8b5; }
+    #submit:disabled { background: #a8d8b5; cursor: default; }
     #message { margin-top: 12px; font-size: 14px; text-align: center; min-height: 20px; }
     #message.ok { color: #1DB446; }
     #message.error { color: #d33; }
-    .hint { font-size: 12px; color: #aaa; margin-top: 4px; }
   </style>
 </head>
 <body>
@@ -52,34 +64,31 @@
     </select>
 
     <label>抵達機場</label>
-    <input id="arrival" list="airports" placeholder="選擇或輸入 3 碼代碼（如 NRT）"
-           maxlength="3" autocapitalize="characters" autocomplete="off">
-    <datalist id="airports">
-      <option value="NRT">東京（成田）</option>
-      <option value="HND">東京（羽田）</option>
-      <option value="KIX">大阪（關西）</option>
-      <option value="NGO">名古屋（中部）</option>
-      <option value="FUK">福岡</option>
-      <option value="CTS">札幌（新千歲）</option>
-      <option value="OKA">沖繩（那霸）</option>
-      <option value="ICN">首爾（仁川）</option>
-      <option value="GMP">首爾（金浦）</option>
-      <option value="PUS">釜山</option>
-      <option value="HKG">香港</option>
-      <option value="MFM">澳門</option>
-      <option value="BKK">曼谷（蘇凡納布）</option>
-      <option value="DMK">曼谷（廊曼）</option>
-      <option value="SIN">新加坡</option>
-      <option value="KUL">吉隆坡</option>
-      <option value="DPS">峇里島</option>
-      <option value="MNL">馬尼拉</option>
-      <option value="CEB">宿霧</option>
-      <option value="SGN">胡志明市</option>
-      <option value="HAN">河內</option>
-      <option value="DAD">峴港</option>
-      <option value="PVG">上海（浦東）</option>
-    </datalist>
-    <p class="hint">也可輸入清單以外的任何 IATA 機場代碼</p>
+    <select id="arrival">
+      <option value="NRT">NRT — 東京（成田）</option>
+      <option value="HND">HND — 東京（羽田）</option>
+      <option value="KIX">KIX — 大阪（關西）</option>
+      <option value="NGO">NGO — 名古屋（中部）</option>
+      <option value="FUK">FUK — 福岡</option>
+      <option value="CTS">CTS — 札幌（新千歲）</option>
+      <option value="OKA">OKA — 沖繩（那霸）</option>
+      <option value="ICN">ICN — 首爾（仁川）</option>
+      <option value="GMP">GMP — 首爾（金浦）</option>
+      <option value="PUS">PUS — 釜山</option>
+      <option value="HKG">HKG — 香港</option>
+      <option value="MFM">MFM — 澳門</option>
+      <option value="BKK">BKK — 曼谷（蘇凡納布）</option>
+      <option value="DMK">DMK — 曼谷（廊曼）</option>
+      <option value="SIN">SIN — 新加坡</option>
+      <option value="KUL">KUL — 吉隆坡</option>
+      <option value="DPS">DPS — 峇里島</option>
+      <option value="MNL">MNL — 馬尼拉</option>
+      <option value="CEB">CEB — 宿霧</option>
+      <option value="SGN">SGN — 胡志明市</option>
+      <option value="HAN">HAN — 河內</option>
+      <option value="DAD">DAD — 峴港</option>
+      <option value="PVG">PVG — 上海（浦東）</option>
+    </select>
 
     <div class="row">
       <div>
@@ -100,18 +109,50 @@
   </div>
 
   <script>
+    var currentRoutes = [];
+
     function renderSlots(routes) {
+      currentRoutes = Array.isArray(routes) ? routes : [];
       var el = document.getElementById('slots');
       var html = '';
       for (var i = 0; i < 2; i++) {
-        var r = routes && routes[i];
+        var r = currentRoutes[i];
         html += r
-          ? '<div class="slot">' + r.departure_id + ' → ' + r.arrival_id +
-            '　' + r.outboundDate + ' ~ ' + r.returnDate +
-            '　< NT$' + Number(r.maxPrice).toLocaleString() + '</div>'
+          ? '<div class="slot">' +
+              '<span class="slot-text">' + r.departure_id + ' → ' + r.arrival_id +
+              '　' + r.outboundDate + ' ~ ' + r.returnDate +
+              '　&lt; NT$' + Number(r.maxPrice).toLocaleString() + '</span>' +
+              '<button type="button" class="delete-btn" onclick="deleteSlot(' + i + ')" aria-label="刪除此路線" title="刪除此路線">&times;</button>' +
+            '</div>'
           : '<div class="slot empty">（空）</div>';
       }
       el.innerHTML = html;
+    }
+
+    function setDeleteButtonsDisabled(disabled) {
+      var btns = document.querySelectorAll('.delete-btn');
+      for (var i = 0; i < btns.length; i++) {
+        btns[i].disabled = disabled;
+      }
+    }
+
+    function deleteSlot(index) {
+      var target = currentRoutes[index];
+      if (!target) return;
+
+      setDeleteButtonsDisabled(true);
+      showMessage('刪除中…', false);
+
+      google.script.run
+        .withSuccessHandler(function (res) {
+          showMessage(res.message, !res.ok);
+          renderSlots(res.routes);
+        })
+        .withFailureHandler(function (err) {
+          setDeleteButtonsDisabled(false);
+          showMessage('刪除失敗：' + err.message, true);
+        })
+        .deleteRoute(target);
     }
 
     function showMessage(text, isError) {

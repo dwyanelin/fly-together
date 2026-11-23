@@ -6,8 +6,9 @@
  *   1. doGet()                → 回傳設定表單頁（由 LINE 圖文選單開啟）
  *   2. doGet(?action=list)    → 回傳 routes JSON（給 GitHub Actions 讀取）
  *   3. submitRoute(data)      → 表單送出：驗證後寫入 Google Sheet（上限 2 格，覆蓋最舊）
- *   4. triggerFlightMonitor() → 定時呼叫 GitHub Actions workflow_dispatch（避開 60 天停用限制）
- *   5. setupMonitorTriggers() → 一次性建立每日 4 次台灣時間觸發條件（08/12/17/22 點）
+ *   4. deleteRoute(target)    → 刪除指定追蹤路線，釋放 2 格額度
+ *   5. triggerFlightMonitor() → 定時呼叫 GitHub Actions workflow_dispatch（避開 60 天停用限制）
+ *   6. setupMonitorTriggers() → 一次性建立每日 4 次台灣時間觸發條件（08/12/17/22 點）
  *
  * 資料與設定存放：Script Properties（Apps Script 編輯器 → 專案設定 → 指令碼屬性）
  *   - SHEET_ID     ：自動建立的 Google Sheet ID
@@ -89,6 +90,49 @@ function submitRoute(data) {
     }
 
     return { ok: true, message: '設定完成！低於門檻價時會透過 LINE 通知。', routes: getRoutes() };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function deleteRoute(target) {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    var sheet = getOrCreateSheet_();
+    var lastRow = sheet.getLastRow();
+    var dataRowCount = Math.max(0, lastRow - 1);
+    if (dataRowCount === 0) {
+      return { ok: false, message: '目前沒有可刪除的路線', routes: [] };
+    }
+
+    var rows = sheet.getRange(2, 1, dataRowCount, HEADERS.length).getValues();
+    var rowIndexToDelete = -1;
+
+    if (target && typeof target === 'object') {
+      for (var i = 0; i < rows.length; i++) {
+        var rowUpdatedAt = rows[i][5] ? new Date(rows[i][5]).toISOString() : '';
+        var sameRoute =
+          toDateString_(rows[i][0]) === String(target.outboundDate || '') &&
+          toDateString_(rows[i][1]) === String(target.returnDate || '') &&
+          String(rows[i][2]) === String(target.departure_id || '') &&
+          String(rows[i][3]) === String(target.arrival_id || '') &&
+          Number(rows[i][4]) === Number(target.maxPrice);
+        if (sameRoute && (!target.updatedAt || rowUpdatedAt === target.updatedAt)) {
+          rowIndexToDelete = i;
+          break;
+        }
+      }
+    } else if (typeof target === 'number' && target >= 0 && target < dataRowCount) {
+      rowIndexToDelete = target;
+    }
+
+    if (rowIndexToDelete === -1) {
+      return { ok: false, message: '找不到該路線（可能已被更新或刪除）', routes: getRoutes() };
+    }
+
+    sheet.deleteRow(2 + rowIndexToDelete);
+    return { ok: true, message: '已刪除該追蹤路線', routes: getRoutes() };
   } finally {
     lock.releaseLock();
   }
