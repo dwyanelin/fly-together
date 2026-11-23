@@ -55,7 +55,8 @@ pnpm dev
 | `SERPAPI_KEY` | SerpApi API Key（必填） | [serpapi.com](https://serpapi.com) 註冊取得 |
 | `LINE_CHANNEL_ACCESS_TOKEN` | LINE Messaging API Token（選填） | [LINE Developers Console](https://developers.line.biz) 建立 Bot 取得 |
 | `LINE_USER_ID` | 測試用：只推播給你個人帳號（選填） | 見下方「[測試：只通知自己](#測試只通知自己)」 |
-| `ROUTES_API_URL` | Apps Script Web App 的 `/exec` URL（選填） | 見下方「[透過 LINE 設定航線](#透過-line-設定航線一次性部署)」；未設定時改讀本地 `config/routes.json` |
+| `ROUTES_API_URL` | Apps Script Web App 的 `/exec` JSON API URL（選填） | 見下方「[透過 LINE 設定航線](#透過-line-設定航線一次性部署)」；未設定時改讀本地 `config/routes.json` |
+| `FORM_URL` | LINE 圖文選單開啟的前端表單頁 URL（選填） | 預設為 GitHub Pages（`https://dwyanelin.github.io/fly-together/`），僅 `pnpm setup:richmenu` 使用 |
 
 ## 測試：只通知自己
 
@@ -99,10 +100,11 @@ LINE_USER_ID=U1234567890abcdef...   # 你的 LINE userId（U 開頭）
 
 ```bash
 # .env（本機）
-ROUTES_API_URL=https://script.google.com/macros/s/XXXX/exec
+ROUTES_API_URL=https://script.google.com/macros/s/XXXX/exec   # 後端 JSON API（Apps Script /exec）
+FORM_URL=https://dwyanelin.github.io/fly-together/            # 前端設定頁（GitHub Pages，給圖文選單用）
 
 # GitHub repo → Settings → Secrets and variables → Actions
-# 新增 secret：ROUTES_API_URL（同上值）
+# 新增 secret：ROUTES_API_URL（填 Apps Script /exec，與本機一致）
 ```
 
 ### Step 3 — 建立 LINE 圖文選單
