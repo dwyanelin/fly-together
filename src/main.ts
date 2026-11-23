@@ -1,9 +1,11 @@
+import { resolve } from 'path';
+import { fileURLToPath } from 'url';
 import { loadConfig } from './config.js';
 import { fetchMatchingFlights } from './services/serpapi.js';
 import { sendFlexMessage } from './services/linemessaging.js';
 import { buildFlexBubble, buildCarouselMessage } from './services/flex-builder.js';
 
-async function main() {
+export async function main() {
   console.log('--- Starting Flight Tracker ---');
 
   const config = await loadConfig();
@@ -98,8 +100,12 @@ async function main() {
   console.log('--- Finished Flight Tracker ---');
 }
 
-// Execute logic
-main().catch(err => {
-  console.error('Unhandled error in main execution:', err);
-  process.exit(1);
-});
+// Execute logic when run directly as CLI entrypoint
+const isDirectRun = Boolean(process.argv[1]) && fileURLToPath(import.meta.url) === resolve(process.argv[1]);
+/* v8 ignore next 6 */
+if (isDirectRun) {
+  main().catch(err => {
+    console.error('Unhandled error in main execution:', err);
+    process.exit(1);
+  });
+}

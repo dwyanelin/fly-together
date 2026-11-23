@@ -42,3 +42,9 @@ Rules:
 • I don't just want it to work—I want it to be something I'm proud to show people
 • This is real. Not a mockup. Not a prototype. A working product.
 • Keep me in control and in the loop at all times
+
+Testing & Coverage Policy (Mandatory for Every Session):
+• Whenever adding features, fixing bugs, or refactoring core logic under `src/` (config, services, utils, main orchestration), ALWAYS add or update unit tests under `tests/`.
+• All TypeScript modules under `src/**/*.ts` (except pure type definitions in `src/types.ts`) are automatically tracked and enforced by `vitest.config.ts` with `perFile: true`.
+• For one-off external setup scripts (`scripts/setup-richmenu.ts`) and Google Apps Script files (`apps-script/`), do NOT write brittle mocks just to chase line coverage. If non-trivial pure logic is added there, extract testable helper logic where practical.
+• Before finishing any development task or opening/merging a PR, ALWAYS run `pnpm test:coverage` and `pnpm typecheck`, and verify all tests and per-file coverage thresholds (Statements/Functions/Lines ≥ 90%, Branches ≥ 85%) pass.
