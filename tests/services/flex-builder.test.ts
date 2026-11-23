@@ -57,6 +57,25 @@ describe('buildFlexBubble', () => {
     const bodyText = JSON.stringify(bubble.body);
     expect(bodyText).toContain('未知');
   });
+
+  it('uses Tiffany Blue palette and displays route code, savings badge, trip days, and settings link', () => {
+    const bubble = buildFlexBubble({
+      ...sampleInput,
+      departureId: 'TPE',
+      arrivalId: 'NRT',
+      maxPrice: 13000,
+      settingsUrl: 'https://dwyanelin.github.io/fly-together/'
+    }) as any;
+
+    const fullText = JSON.stringify(bubble);
+    expect(bubble.header.backgroundColor).toBe('#0ABAB5');
+    expect(fullText).toContain('TPE → NRT');
+    expect(fullText).toContain('低於門檻 $2,000');
+    expect(fullText).toContain('8 天');
+    expect(fullText).toContain('調整追蹤設定');
+    expect(fullText).toContain('https://dwyanelin.github.io/fly-together/');
+    expect(fullText).not.toContain('#1DB446');
+  });
 });
 
 describe('buildCarouselMessage', () => {

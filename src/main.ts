@@ -18,7 +18,9 @@ async function main() {
     return;
   }
 
+  const settingsUrl = process.env.FORM_URL || 'https://dwyanelin.github.io/fly-together/';
   const bubbles: object[] = [];
+  const altSummaries: string[] = [];
   let routesSearched = 0;
   let totalMatches = 0;
 
@@ -49,17 +51,24 @@ async function main() {
         totalMatches += affordableFlights.length;
         console.log(`Found ${affordableFlights.length} affordable flight option(s) for ${route.name}.`);
 
+        const lowestPrice = Math.min(...affordableFlights.map(f => f.price));
+        altSummaries.push(`${route.name} $${lowestPrice.toLocaleString()} 起`);
+
         const bubble = buildFlexBubble({
           targetName: route.name,
+          departureId: route.departure_id,
+          arrivalId: route.arrival_id,
           outboundDate: route.outboundDate,
           returnDate: route.returnDate,
+          maxPrice: route.maxPrice,
           currency: config.currency,
           flights: affordableFlights.map(f => ({
             airline: f.airline,
             outboundTime: f.outboundTime,
             price: f.price
           })),
-          bookingLink: affordableFlights[0].link
+          bookingLink: affordableFlights[0].link,
+          settingsUrl
         });
         bubbles.push(bubble);
       } else {
@@ -73,7 +82,8 @@ async function main() {
   // Send Flex Message if any routes match
   if (bubbles.length > 0) {
     console.log('\nSending LINE Flex Message...');
-    const flexMessage = buildCarouselMessage(bubbles);
+    const altText = `✈️ 發現達標機票！${altSummaries.join(' / ')}`;
+    const flexMessage = buildCarouselMessage(bubbles, altText);
     try {
       await sendFlexMessage(config.lineChannelAccessToken, flexMessage, config.lineUserId);
     } catch (error) {
