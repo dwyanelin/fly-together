@@ -1,10 +1,10 @@
 /**
  * 建立並綁定 LINE 官方帳號的預設圖文選單（Rich Menu）。
- * 選單只有一個按鈕：開啟航班追蹤設定表單（ROUTES_API_URL）。
+ * 選單只有一個按鈕：開啟航班追蹤設定表單（FORM_URL）。
  *
  * 前置需求（.env）：
  *   LINE_CHANNEL_ACCESS_TOKEN — Messaging API channel access token
- *   ROUTES_API_URL            — Apps Script Web App 的 /exec URL
+ *   FORM_URL                  — 航班追蹤設定頁 URL（選填，預設為 GitHub Pages 網址）
  *
  * 執行：pnpm setup:richmenu
  * 可重複執行：會先刪除同名舊選單再重建。
@@ -25,11 +25,12 @@ const MENU_NAME = 'fly-together-settings';
 // 舊版選單名稱，重跑時一併清除
 const LEGACY_MENU_NAMES = ['flytogether-settings'];
 
+const DEFAULT_FORM_URL = 'https://dwyanelin.github.io/fly-together/';
+
 const token = process.env.LINE_CHANNEL_ACCESS_TOKEN;
-const formUrl = process.env.ROUTES_API_URL;
+const formUrl = process.env.FORM_URL || DEFAULT_FORM_URL;
 
 if (!token) throw new Error('LINE_CHANNEL_ACCESS_TOKEN is not set in .env');
-if (!formUrl) throw new Error('ROUTES_API_URL is not set in .env (deploy the Apps Script first)');
 
 const headers = { Authorization: `Bearer ${token}` };
 
