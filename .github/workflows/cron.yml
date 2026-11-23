@@ -1,13 +1,11 @@
 name: Flight Price Monitor
 
 on:
-  schedule:
-    # Runs at 00:00, 04:00, 09:00, and 14:00 UTC every day
-    # Equivalent to 08:00, 12:00, 17:00, and 22:00 Taiwan Time (UTC+8)
-    # Quota: 2 routes × 4 runs/day × 31 days = 248 SerpApi calls/month (free tier: 250)
-    - cron: '0 0,4,9,14 * * *'
+  # Triggered 4 times/day (08:00, 12:00, 17:00, 22:00 Asia/Taipei) by Google Apps Script
+  # (apps-script/Code.gs -> triggerFlightMonitor) via workflow_dispatch to avoid GitHub's
+  # 60-day inactivity rule that disables `on: schedule` workflows on public repos.
+  # Quota: 2 routes × 4 runs/day × 31 days = 248 SerpApi calls/month (free tier: 250)
   workflow_dispatch:
-    # Allow manual trigger
 
 jobs:
   monitor:

@@ -9,7 +9,7 @@
 - 僅篩選直飛 + 指定航空公司（傳統航空：華航/長榮/星宇/日航/全日空）
 - 價格低於設定門檻時，透過 LINE Flex Message 推播通知（broadcast 給所有好友）
 - 通知卡片包含航空公司、出發時間、價格，一鍵連結至 Google Flights
-- GitHub Actions 自動排程（每日四次：台灣時間 08:00 / 12:00 / 17:00 / 22:00）
+- Google Apps Script 自動排程觸發 GitHub Actions（每日四次：台灣時間 08:00 / 12:00 / 17:00 / 22:00，不受 GitHub 60 天無 commit 停用限制）
 - 全域共用 2 個路線名額（新設定覆蓋最舊）：2 條 × 4 次/天 × 31 天 = 248 次/月，控制在 SerpApi 免費額度 250 內
 
 ## 系統架構
@@ -18,11 +18,13 @@
 使用者 LINE 聊天室
   └─ 圖文選單「✈️ 設定航班追蹤」→ 開啟表單（LINE 內建瀏覽器）
        └─ Google Apps Script Web App
-            ├─ doGet            → 表單頁（apps-script/form.html）
-            ├─ submitRoute      → 驗證後寫入 Google Sheet（上限 2 格，覆蓋最舊）
-            └─ doGet?action=list → routes JSON
-                 ▲
-GitHub Actions cron（每日 4 次）
+            ├─ doGet                → 表單頁（apps-script/form.html）
+            ├─ submitRoute          → 驗證後寫入 Google Sheet（上限 2 格，覆蓋最舊）
+            ├─ doGet?action=list    → routes JSON
+            └─ triggerFlightMonitor → 每日 4 次呼叫 GitHub workflow_dispatch
+                 │                      ▲
+                 ▼                      │
+GitHub Actions（workflow_dispatch）─────┘
   └─ 讀 routes JSON → SerpApi 搜尋 → 達標 → LINE broadcast 通知
 ```
 
@@ -150,17 +152,23 @@ pnpm test            # 執行測試
 pnpm setup:richmenu  # 建立/重建 LINE 圖文選單（一次性）
 ```
 
-## GitHub Actions 排程
+## 自動排程（Apps Script → GitHub Actions）
 
-已設定 `.github/workflows/cron.yml`，每日自動執行四次（台灣時間 08:00 / 12:00 / 17:00 / 22:00）。
+為避免 GitHub 公開 repo 連續 60 天無 commit 自動停用 `on: schedule` 排程，改由 **Google Apps Script 時間驅動觸發條件** 每日四次（台灣時間 08:00 / 12:00 / 17:00 / 22:00）呼叫 GitHub API 觸發 `.github/workflows/cron.yml` 的 `workflow_dispatch`。
 
-需在 GitHub repo 的 **Settings → Secrets and variables → Actions** 新增：
+**GitHub Secrets**（**Settings → Secrets and variables → Actions**）：
 - `SERPAPI_KEY`
 - `LINE_CHANNEL_ACCESS_TOKEN`
 - `ROUTES_API_URL`（Apps Script 部署後的 /exec URL）
 - `LINE_USER_ID`（選填，設定後 CI 也只推播給你個人帳號）
 
-也可透過 **Actions → Flight Price Monitor → Run workflow** 手動觸發。
+**Apps Script 排程設定（一次性）**：
+1. 到 GitHub 建立 Fine-grained Personal Access Token（僅授權 `fly-together` repo，權限開 **Actions: Read and write**）。
+2. 在 Apps Script 編輯器 → **專案設定 → 指令碼屬性**，新增 `GITHUB_TOKEN` 並貼上 Token。
+3. 在 Apps Script 編輯器執行一次 `setupMonitorTriggers`（會自動建立每日 4 組台灣時間排程，重複執行也會先清舊的避免爆額度）。
+4. 可執行一次 `triggerFlightMonitor` 驗證是否成功觸發 GitHub Actions。
+
+也可隨時透過 **Actions → Flight Price Monitor → Run workflow** 手動觸發。
 
 ## 架構
 
@@ -177,7 +185,7 @@ src/
     ├── airports.ts           # IATA 代碼 → 顯示名稱對照
     └── tfs-gen.ts            # Google Flights URL 編碼（⚠️ 逆向工程）
 apps-script/
-├── Code.gs                   # Apps Script 後端：表單頁 / 寫入 Sheet / routes JSON API
+├── Code.gs                   # Apps Script 後端：表單頁 / 寫入 Sheet / routes JSON API / 排程觸發 GitHub Actions
 └── form.html                 # LINE 內開啟的設定表單
 scripts/
 └── setup-richmenu.ts         # 建立 LINE 圖文選單（一次性）
@@ -192,5 +200,5 @@ assets/
 - **Routes 設定**: LINE Rich Menu → Google Apps Script 表單 → Google Sheet
 - **Flight Data**: SerpApi (Google Flights engine)
 - **Notifications**: LINE Messaging API (Broadcast / Push + Flex Message)
-- **Scheduling**: GitHub Actions cron
+- **Scheduling**: Google Apps Script Time-driven Triggers → GitHub Actions (`workflow_dispatch`)
 - **Testing**: Vitest
