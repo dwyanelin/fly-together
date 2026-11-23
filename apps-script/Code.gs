@@ -28,13 +28,32 @@ var MONITOR_HOURS_TAIPEI = [8, 12, 17, 22];
 
 function doGet(e) {
   if (e && e.parameter && e.parameter.action === 'list') {
-    return ContentService
-      .createTextOutput(JSON.stringify({ routes: getRoutes() }))
-      .setMimeType(ContentService.MimeType.JSON);
+    return jsonResponse_({ routes: getRoutes() });
   }
   return HtmlService.createHtmlOutputFromFile('form')
     .setTitle('FlyTogether 航班追蹤設定')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+}
+
+function doPost(e) {
+  try {
+    var body = JSON.parse((e && e.postData && e.postData.contents) || '{}');
+    if (body.action === 'submit') {
+      return jsonResponse_(submitRoute(body.data));
+    }
+    if (body.action === 'delete') {
+      return jsonResponse_(deleteRoute(body.target));
+    }
+    return jsonResponse_({ ok: false, message: '不支援的操作' });
+  } catch (err) {
+    return jsonResponse_({ ok: false, message: '請求格式錯誤：' + err.message });
+  }
+}
+
+function jsonResponse_(obj) {
+  return ContentService
+    .createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
 }
 
 // ---------- Called from form.html via google.script.run ----------
