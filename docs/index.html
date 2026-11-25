@@ -88,7 +88,7 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      padding: 3px 5px;
+      padding: 3px 4px;
       border-radius: 6px;
       background: rgba(255, 255, 255, 0.78);
       border: 1px solid rgba(10, 186, 181, 0.22);
@@ -530,7 +530,7 @@
       var r = String(retStr || '').split('-');
       if (o.length === 3 && r.length === 3) {
         if (o[0] === r[0]) {
-          return { out: o[0] + '/' + o[1] + '/' + o[2], ret: r[1] + '/' + r[2] };
+          return { out: o[0].slice(2) + '/' + o[1] + '/' + o[2], ret: r[1] + '/' + r[2] };
         }
         return { out: o[0].slice(2) + '/' + o[1] + '/' + o[2], ret: r[0].slice(2) + '/' + r[1] + '/' + r[2] };
       }
