@@ -54,12 +54,14 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 6px;
-      padding: 7px 8px 7px 10px;
+      gap: 4px;
+      padding: 6px 6px 6px 8px;
       border-radius: 10px;
       background: #EDF9F8;
-      min-height: 36px;
+      min-height: 38px;
+      transition: opacity .15s;
     }
+    .slot.saving { opacity: 0.55; pointer-events: none; }
     .slot.empty {
       background: #f5f5f5;
       color: #a3a3a3;
@@ -72,31 +74,81 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 6px;
+      gap: 4px;
       white-space: nowrap;
-      overflow: hidden;
     }
-    .slot-route {
-      font-size: 13px;
+    .slot-group {
+      display: inline-flex;
+      align-items: center;
+      gap: 1px;
+      min-width: 0;
+    }
+    .edit-chip {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3px 5px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.78);
+      border: 1px solid rgba(10, 186, 181, 0.22);
+      cursor: pointer;
+      transition: background .12s, border-color .12s;
+      line-height: 1.2;
+    }
+    .edit-chip:active, .edit-chip:hover {
+      background: #fff;
+      border-color: #0ABAB5;
+    }
+    .route-chip {
+      font-size: 12.5px;
       font-weight: 700;
-      color: #111;
+      color: #111827;
       letter-spacing: -0.2px;
     }
-    .slot-date {
-      font-size: 12px;
-      color: #555;
-      font-variant-numeric: tabular-nums;
+    .route-arrow {
+      font-size: 11px;
+      color: #6b7280;
+      padding: 0 1px;
+      user-select: none;
     }
-    .slot-price {
-      font-size: 12.5px;
+    .date-chip {
+      font-size: 11.5px;
+      color: #374151;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.2px;
+    }
+    .date-sep {
+      font-size: 11px;
+      color: #9ca3af;
+      padding: 0 1px;
+      user-select: none;
+    }
+    .price-chip {
+      font-size: 12px;
       font-weight: 700;
       color: #08918D;
       font-variant-numeric: tabular-nums;
+      font-family: inherit;
+    }
+    .native-overlay {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+      border: none;
+      padding: 0;
+      margin: 0;
+      font-size: 16px;
+      -webkit-appearance: none;
+      appearance: none;
     }
     .delete-btn {
-      width: 26px;
-      height: 26px;
-      min-width: 26px;
+      width: 24px;
+      height: 24px;
+      min-width: 24px;
       padding: 0;
       margin: 0;
       display: inline-flex;
@@ -106,7 +158,7 @@
       color: #9ca3af;
       border: none;
       border-radius: 50%;
-      font-size: 18px;
+      font-size: 17px;
       line-height: 1;
       cursor: pointer;
       transition: background .15s, color .15s;
@@ -151,7 +203,7 @@
       color: #555;
       margin-bottom: 4px;
     }
-    select, input {
+    .form-control {
       width: 100%;
       height: 40px;
       padding: 0 10px;
@@ -163,7 +215,7 @@
       outline: none;
       transition: border-color .15s, box-shadow .15s;
     }
-    select:focus, input:focus {
+    .form-control:focus {
       border-color: #0ABAB5;
       box-shadow: 0 0 0 2px rgba(10, 186, 181, 0.18);
     }
@@ -210,13 +262,138 @@
     }
     #message.ok { color: #08918D; }
     #message.error { color: #d33; }
+
+    /* Bottom Sheet for Price Editing */
+    .sheet-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(17, 24, 39, 0.42);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .18s ease;
+    }
+    .sheet-backdrop.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .sheet {
+      width: 100%;
+      max-width: 480px;
+      background: #fff;
+      border-radius: 20px 20px 0 0;
+      padding: 10px 18px calc(18px + env(safe-area-inset-bottom, 0px));
+      box-shadow: 0 -8px 30px rgba(0, 0, 0, .14);
+      transform: translateY(100%);
+      transition: transform .2s cubic-bezier(.22, 1, .36, 1);
+    }
+    .sheet-backdrop.open .sheet {
+      transform: translateY(0);
+    }
+    .sheet-handle {
+      width: 36px;
+      height: 4px;
+      border-radius: 999px;
+      background: #e5e7eb;
+      margin: 0 auto 12px;
+    }
+    .sheet-title-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .sheet-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #111827;
+    }
+    .sheet-route-sub {
+      font-size: 12px;
+      color: #08918D;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+    .sheet-input-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .sheet-input-wrap .price-prefix {
+      left: 14px;
+      font-size: 15px;
+    }
+    #sheetPriceInput {
+      width: 100%;
+      height: 48px;
+      padding: 0 14px 0 52px;
+      font-size: 20px;
+      font-weight: 700;
+      color: #111827;
+      border: 1.5px solid #0ABAB5;
+      border-radius: 12px;
+      background: #f9fffe;
+      outline: none;
+      font-variant-numeric: tabular-nums;
+    }
+    .stepper-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+    .stepper-btn {
+      height: 34px;
+      border-radius: 8px;
+      border: 1px solid #d5eceb;
+      background: #EDF9F8;
+      color: #08918D;
+      font-size: 12.5px;
+      font-weight: 700;
+      cursor: pointer;
+      font-variant-numeric: tabular-nums;
+    }
+    .stepper-btn:active {
+      background: #0ABAB5;
+      color: #fff;
+    }
+    .sheet-actions {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 8px;
+    }
+    .sheet-cancel {
+      height: 44px;
+      border-radius: 11px;
+      border: 1px solid #e5e7eb;
+      background: #fff;
+      color: #6b7280;
+      font-size: 14.5px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .sheet-save {
+      height: 44px;
+      border-radius: 11px;
+      border: none;
+      background: #0ABAB5;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .sheet-save:active { background: #08918D; }
   </style>
 </head>
 <body>
   <div class="card">
     <div class="card-header">
       <h2>追蹤中路線</h2>
-      <span id="slotBadge" class="badge">0/2・滿格覆蓋最舊</span>
+      <span id="slotBadge" class="badge">0/2・點擊項目可直接編輯</span>
     </div>
     <div id="slots" class="slots"><div class="slot empty">載入中…</div></div>
   </div>
@@ -229,7 +406,7 @@
     <div class="field-group airport-row">
       <div>
         <label for="departure">出發機場</label>
-        <select id="departure">
+        <select id="departure" class="form-control">
           <option value="TPE">TPE 桃園</option>
           <option value="TSA">TSA 松山</option>
         </select>
@@ -237,7 +414,7 @@
       <div class="airport-arrow" aria-hidden="true">→</div>
       <div>
         <label for="arrival">抵達機場</label>
-        <select id="arrival">
+        <select id="arrival" class="form-control">
           <option value="NRT">NRT 東京成田</option>
           <option value="HND">HND 東京羽田</option>
           <option value="KIX">KIX 大阪關西</option>
@@ -268,11 +445,11 @@
     <div class="field-group date-row">
       <div>
         <label for="outboundDate">出發日期</label>
-        <input id="outboundDate" type="date">
+        <input id="outboundDate" class="form-control" type="date">
       </div>
       <div>
         <label for="returnDate">回程日期</label>
-        <input id="returnDate" type="date">
+        <input id="returnDate" class="form-control" type="date">
       </div>
     </div>
 
@@ -280,7 +457,7 @@
       <label for="maxPrice">價格門檻（來回含稅低於此價才通知）</label>
       <div class="price-wrap">
         <span class="price-prefix">NT$</span>
-        <input id="maxPrice" type="number" inputmode="numeric" min="1" step="1" placeholder="例如 13000">
+        <input id="maxPrice" class="form-control" type="number" inputmode="numeric" min="1" step="1" placeholder="例如 13000">
       </div>
     </div>
 
@@ -288,43 +465,150 @@
     <p id="message"></p>
   </div>
 
+  <!-- Price Edit Bottom Sheet -->
+  <div id="priceSheet" class="sheet-backdrop" onclick="onSheetBackdropClick(event)" aria-hidden="true">
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+      <div class="sheet-handle"></div>
+      <div class="sheet-title-row">
+        <span id="sheetTitle" class="sheet-title">編輯價格門檻</span>
+        <span id="sheetRouteSub" class="sheet-route-sub"></span>
+      </div>
+      <div class="sheet-input-wrap">
+        <span class="price-prefix">NT$</span>
+        <input id="sheetPriceInput" type="number" inputmode="numeric" min="1" step="1">
+      </div>
+      <div class="stepper-row">
+        <button type="button" class="stepper-btn" onclick="stepSheetPrice(-2000)">-2,000</button>
+        <button type="button" class="stepper-btn" onclick="stepSheetPrice(-1000)">-1,000</button>
+        <button type="button" class="stepper-btn" onclick="stepSheetPrice(1000)">+1,000</button>
+        <button type="button" class="stepper-btn" onclick="stepSheetPrice(2000)">+2,000</button>
+      </div>
+      <div class="sheet-actions">
+        <button type="button" class="sheet-cancel" onclick="closePriceSheet()">取消</button>
+        <button type="button" class="sheet-save" onclick="confirmPriceSheet()">儲存價格</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     var API_URL = 'https://script.google.com/macros/s/AKfycbwgXwKybQ2GJ_z8vfClzqc7EyPpzSMkqJuW1HbzJmIpULWBp5Ol5jxTNCjAQhqipBk-/exec';
-    var currentRoutes = [];
+    var DEPARTURES = [
+      ['TPE', 'TPE 桃園'],
+      ['TSA', 'TSA 松山']
+    ];
+    var ARRIVALS = [
+      ['NRT', 'NRT 東京成田'], ['HND', 'HND 東京羽田'], ['KIX', 'KIX 大阪關西'],
+      ['NGO', 'NGO 名古屋中部'], ['FUK', 'FUK 福岡'], ['CTS', 'CTS 札幌新千歲'],
+      ['OKA', 'OKA 沖繩那霸'], ['ICN', 'ICN 首爾仁川'], ['GMP', 'GMP 首爾金浦'],
+      ['PUS', 'PUS 釜山'], ['HKG', 'HKG 香港'], ['MFM', 'MFM 澳門'],
+      ['BKK', 'BKK 曼谷蘇凡納布'], ['DMK', 'DMK 曼谷廊曼'], ['SIN', 'SIN 新加坡'],
+      ['KUL', 'KUL 吉隆坡'], ['DPS', 'DPS 峇里島'], ['MNL', 'MNL 馬尼拉'],
+      ['CEB', 'CEB 宿霧'], ['SGN', 'SGN 胡志明市'], ['HAN', 'HAN 河內'],
+      ['DAD', 'DAD 峴港'], ['PVG', 'PVG 上海浦東']
+    ];
 
-    function formatDateRange(outStr, retStr) {
+    var currentRoutes = [];
+    var editingPriceIndex = -1;
+    var todayStr = new Date().toISOString().slice(0, 10);
+
+    function addDays(dateStr, days) {
+      var d = new Date(dateStr + 'T00:00:00Z');
+      if (isNaN(d.getTime())) return dateStr;
+      d.setUTCDate(d.getUTCDate() + days);
+      return d.toISOString().slice(0, 10);
+    }
+
+    function diffDays(a, b) {
+      var d1 = new Date(a + 'T00:00:00Z').getTime();
+      var d2 = new Date(b + 'T00:00:00Z').getTime();
+      if (isNaN(d1) || isNaN(d2)) return 1;
+      return Math.max(1, Math.round((d2 - d1) / 86400000));
+    }
+
+    function formatDateParts(outStr, retStr) {
       var o = String(outStr || '').split('-');
       var r = String(retStr || '').split('-');
       if (o.length === 3 && r.length === 3) {
         if (o[0] === r[0]) {
-          return o[0] + '/' + o[1] + '/' + o[2] + '–' + r[1] + '/' + r[2];
+          return { out: o[0] + '/' + o[1] + '/' + o[2], ret: r[1] + '/' + r[2] };
         }
-        return o[0].slice(2) + '/' + o[1] + '/' + o[2] + '–' + r[0].slice(2) + '/' + r[1] + '/' + r[2];
+        return { out: o[0].slice(2) + '/' + o[1] + '/' + o[2], ret: r[0].slice(2) + '/' + r[1] + '/' + r[2] };
       }
-      return outStr + '–' + retStr;
+      return { out: outStr, ret: retStr };
+    }
+
+    function buildOptions(list, selectedValue) {
+      var found = false;
+      var html = '';
+      for (var i = 0; i < list.length; i++) {
+        var code = list[i][0];
+        var label = list[i][1];
+        var sel = code === selectedValue ? ' selected' : '';
+        if (sel) found = true;
+        html += '<option value="' + code + '"' + sel + '>' + label + '</option>';
+      }
+      if (!found && selectedValue) {
+        html = '<option value="' + selectedValue + '" selected>' + selectedValue + '</option>' + html;
+      }
+      return html;
     }
 
     function renderSlots(routes) {
       currentRoutes = Array.isArray(routes) ? routes : [];
       document.getElementById('slotBadge').textContent =
-        currentRoutes.length + '/2・滿格覆蓋最舊';
+        currentRoutes.length + '/2・點擊項目可直接編輯';
 
       var el = document.getElementById('slots');
       var html = '';
       for (var i = 0; i < 2; i++) {
         var r = currentRoutes[i];
-        html += r
-          ? '<div class="slot">' +
-              '<div class="slot-main">' +
-                '<span class="slot-route">' + r.departure_id + '→' + r.arrival_id + '</span>' +
-                '<span class="slot-date">' + formatDateRange(r.outboundDate, r.returnDate) + '</span>' +
-                '<span class="slot-price">&lt;$' + Number(r.maxPrice).toLocaleString() + '</span>' +
-              '</div>' +
-              '<button type="button" class="delete-btn" onclick="deleteSlot(' + i + ')" aria-label="刪除此路線" title="刪除此路線">&times;</button>' +
-            '</div>'
-          : '<div class="slot empty">空位（可新增）</div>';
+        if (!r) {
+          html += '<div class="slot empty">空位（可新增）</div>';
+          continue;
+        }
+        var dates = formatDateParts(r.outboundDate, r.returnDate);
+        var minRet = addDays(r.outboundDate, 1);
+
+        html +=
+          '<div class="slot" id="slot-' + i + '">' +
+            '<div class="slot-main">' +
+              '<span class="slot-group">' +
+                '<span class="edit-chip route-chip">' +
+                  '<span>' + r.departure_id + '</span>' +
+                  '<select class="native-overlay" aria-label="編輯出發機場" onchange="inlineUpdate(' + i + ', \'departure_id\', this.value)">' +
+                    buildOptions(DEPARTURES, r.departure_id) +
+                  '</select>' +
+                '</span>' +
+                '<span class="route-arrow">→</span>' +
+                '<span class="edit-chip route-chip">' +
+                  '<span>' + r.arrival_id + '</span>' +
+                  '<select class="native-overlay" aria-label="編輯抵達機場" onchange="inlineUpdate(' + i + ', \'arrival_id\', this.value)">' +
+                    buildOptions(ARRIVALS, r.arrival_id) +
+                  '</select>' +
+                '</span>' +
+              '</span>' +
+              '<span class="slot-group">' +
+                '<span class="edit-chip date-chip">' +
+                  '<span>' + dates.out + '</span>' +
+                  '<input type="date" class="native-overlay" aria-label="編輯出發日期" min="' + todayStr + '" value="' + r.outboundDate + '" onchange="inlineUpdate(' + i + ', \'outboundDate\', this.value)">' +
+                '</span>' +
+                '<span class="date-sep">–</span>' +
+                '<span class="edit-chip date-chip">' +
+                  '<span>' + dates.ret + '</span>' +
+                  '<input type="date" class="native-overlay" aria-label="編輯回程日期" min="' + minRet + '" value="' + r.returnDate + '" onchange="inlineUpdate(' + i + ', \'returnDate\', this.value)">' +
+                '</span>' +
+              '</span>' +
+              '<button type="button" class="edit-chip price-chip" aria-label="編輯價格門檻" onclick="openPriceSheet(' + i + ')">&lt;$' + Number(r.maxPrice).toLocaleString() + '</button>' +
+            '</div>' +
+            '<button type="button" class="delete-btn" onclick="deleteSlot(' + i + ')" aria-label="刪除此路線" title="刪除此路線">&times;</button>' +
+          '</div>';
       }
       el.innerHTML = html;
+    }
+
+    function setSlotSaving(index, saving) {
+      var el = document.getElementById('slot-' + index);
+      if (el) el.classList.toggle('saving', saving);
     }
 
     function setDeleteButtonsDisabled(disabled) {
@@ -364,6 +648,107 @@
         showMessage('載入失敗，請重新整理頁面', true);
       }
     }
+
+    async function inlineUpdate(index, field, newValue) {
+      var target = currentRoutes[index];
+      if (!target || !newValue) return;
+
+      var updated = {
+        departure_id: target.departure_id,
+        arrival_id: target.arrival_id,
+        outboundDate: target.outboundDate,
+        returnDate: target.returnDate,
+        maxPrice: Number(target.maxPrice)
+      };
+
+      if (field === 'maxPrice') {
+        updated.maxPrice = Number(newValue);
+      } else {
+        updated[field] = newValue;
+      }
+
+      // 若出發日期改成晚於或等於原回程日期，自動保留原行程天數順移回程日期
+      if (field === 'outboundDate' && updated.returnDate <= updated.outboundDate) {
+        var prevSpan = diffDays(target.outboundDate, target.returnDate);
+        updated.returnDate = addDays(updated.outboundDate, prevSpan);
+      }
+
+      // 若數值沒有實質變更則不重送
+      if (
+        updated.departure_id === target.departure_id &&
+        updated.arrival_id === target.arrival_id &&
+        updated.outboundDate === target.outboundDate &&
+        updated.returnDate === target.returnDate &&
+        updated.maxPrice === Number(target.maxPrice)
+      ) {
+        return;
+      }
+
+      setSlotSaving(index, true);
+      showMessage('更新中…', false);
+
+      try {
+        var res = await apiPost({ action: 'update', target: target, data: updated });
+        showMessage(res.message, !res.ok);
+        renderSlots(res.routes);
+      } catch (err) {
+        setSlotSaving(index, false);
+        showMessage('更新失敗：' + err.message, true);
+        renderSlots(currentRoutes);
+      }
+    }
+
+    function openPriceSheet(index) {
+      var r = currentRoutes[index];
+      if (!r) return;
+      editingPriceIndex = index;
+      var dates = formatDateParts(r.outboundDate, r.returnDate);
+      document.getElementById('sheetRouteSub').textContent =
+        r.departure_id + '→' + r.arrival_id + ' · ' + dates.out + '–' + dates.ret;
+      var input = document.getElementById('sheetPriceInput');
+      input.value = r.maxPrice;
+      var sheet = document.getElementById('priceSheet');
+      sheet.classList.add('open');
+      sheet.setAttribute('aria-hidden', 'false');
+      setTimeout(function () {
+        input.focus();
+        input.select();
+      }, 60);
+    }
+
+    function closePriceSheet() {
+      editingPriceIndex = -1;
+      var sheet = document.getElementById('priceSheet');
+      sheet.classList.remove('open');
+      sheet.setAttribute('aria-hidden', 'true');
+    }
+
+    function onSheetBackdropClick(e) {
+      if (e.target && e.target.id === 'priceSheet') closePriceSheet();
+    }
+
+    function stepSheetPrice(delta) {
+      var input = document.getElementById('sheetPriceInput');
+      var cur = Number(input.value) || 0;
+      var next = Math.max(1000, cur + delta);
+      input.value = next;
+    }
+
+    function confirmPriceSheet() {
+      var idx = editingPriceIndex;
+      var val = Number(document.getElementById('sheetPriceInput').value);
+      if (!isFinite(val) || val <= 0 || val !== Math.floor(val)) {
+        showMessage('價格門檻需為正整數（TWD）', true);
+        return;
+      }
+      closePriceSheet();
+      inlineUpdate(idx, 'maxPrice', val);
+    }
+
+    document.getElementById('sheetPriceInput').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') confirmPriceSheet();
+      if (e.key === 'Escape') closePriceSheet();
+    });
 
     async function deleteSlot(index) {
       var target = currentRoutes[index];
@@ -408,13 +793,12 @@
 
     loadRoutes();
 
-    var today = new Date().toISOString().slice(0, 10);
     var outEl = document.getElementById('outboundDate');
     var retEl = document.getElementById('returnDate');
-    outEl.min = today;
-    retEl.min = today;
+    outEl.min = todayStr;
+    retEl.min = todayStr;
     outEl.addEventListener('change', function () {
-      retEl.min = outEl.value || today;
+      retEl.min = outEl.value ? addDays(outEl.value, 1) : todayStr;
       if (retEl.value && outEl.value && retEl.value <= outEl.value) {
         retEl.value = '';
       }
