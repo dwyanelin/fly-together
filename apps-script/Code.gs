@@ -230,7 +230,7 @@ function validate_(data) {
   today.setHours(0, 0, 0, 0);
   if (isNaN(outbound.getTime()) || isNaN(ret.getTime())) return '日期無效';
   if (outbound < today) return '出發日期不能是過去';
-  if (ret <= outbound) return '回程日期必須晚於出發日期';
+  if (ret < outbound) return '回程日期必須晚於或等於出發日期';
 
   if (ALLOWED_DEPARTURES.indexOf(data.departure_id) === -1) {
     return '出發機場僅限 TPE（桃園）或 TSA（松山）';

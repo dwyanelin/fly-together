@@ -521,8 +521,8 @@
     function diffDays(a, b) {
       var d1 = new Date(a + 'T00:00:00Z').getTime();
       var d2 = new Date(b + 'T00:00:00Z').getTime();
-      if (isNaN(d1) || isNaN(d2)) return 1;
-      return Math.max(1, Math.round((d2 - d1) / 86400000));
+      if (isNaN(d1) || isNaN(d2)) return 0;
+      return Math.max(0, Math.round((d2 - d1) / 86400000));
     }
 
     function formatDateParts(outStr, retStr) {
@@ -567,7 +567,7 @@
           continue;
         }
         var dates = formatDateParts(r.outboundDate, r.returnDate);
-        var minRet = addDays(r.outboundDate, 1);
+        var minRet = r.outboundDate;
 
         html +=
           '<div class="slot" id="slot-' + i + '">' +
@@ -667,8 +667,8 @@
         updated[field] = newValue;
       }
 
-      // 若出發日期改成晚於或等於原回程日期，自動保留原行程天數順移回程日期
-      if (field === 'outboundDate' && updated.returnDate <= updated.outboundDate) {
+      // 若出發日期改成晚於原回程日期，自動保留原行程天數順移回程日期
+      if (field === 'outboundDate' && updated.returnDate < updated.outboundDate) {
         var prevSpan = diffDays(target.outboundDate, target.returnDate);
         updated.returnDate = addDays(updated.outboundDate, prevSpan);
       }
@@ -798,8 +798,8 @@
     outEl.min = todayStr;
     retEl.min = todayStr;
     outEl.addEventListener('change', function () {
-      retEl.min = outEl.value ? addDays(outEl.value, 1) : todayStr;
-      if (retEl.value && outEl.value && retEl.value <= outEl.value) {
+      retEl.min = outEl.value || todayStr;
+      if (retEl.value && outEl.value && retEl.value < outEl.value) {
         retEl.value = '';
       }
     });

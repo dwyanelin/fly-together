@@ -76,6 +76,15 @@ describe('buildFlexBubble', () => {
     expect(fullText).toContain('https://dwyanelin.github.io/fly-together/');
     expect(fullText).not.toContain('#1DB446');
   });
+
+  it('displays 當天來回 when outboundDate equals returnDate', () => {
+    const bubble = buildFlexBubble({
+      ...sampleInput,
+      outboundDate: '2027-02-06',
+      returnDate: '2027-02-06'
+    }) as any;
+    expect(JSON.stringify(bubble.header)).toContain('當天來回');
+  });
 });
 
 describe('buildCarouselMessage', () => {
