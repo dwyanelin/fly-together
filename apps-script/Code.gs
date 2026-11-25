@@ -41,6 +41,9 @@ function doPost(e) {
     if (body.action === 'submit') {
       return jsonResponse_(submitRoute(body.data));
     }
+    if (body.action === 'update') {
+      return jsonResponse_(updateRoute(body.target, body.data));
+    }
     if (body.action === 'delete') {
       return jsonResponse_(deleteRoute(body.target));
     }
@@ -152,6 +155,60 @@ function deleteRoute(target) {
 
     sheet.deleteRow(2 + rowIndexToDelete);
     return { ok: true, message: '已刪除該追蹤路線', routes: getRoutes() };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function updateRoute(target, data) {
+  var error = validate_(data);
+  if (error) return { ok: false, message: error, routes: getRoutes() };
+
+  var lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    var sheet = getOrCreateSheet_();
+    var lastRow = sheet.getLastRow();
+    var dataRowCount = Math.max(0, lastRow - 1);
+    if (dataRowCount === 0) {
+      return { ok: false, message: '目前沒有可編輯的路線', routes: [] };
+    }
+
+    var rows = sheet.getRange(2, 1, dataRowCount, HEADERS.length).getValues();
+    var rowIndexToUpdate = -1;
+
+    if (target && typeof target === 'object') {
+      for (var i = 0; i < rows.length; i++) {
+        var rowUpdatedAt = rows[i][5] ? new Date(rows[i][5]).toISOString() : '';
+        var sameRoute =
+          toDateString_(rows[i][0]) === String(target.outboundDate || '') &&
+          toDateString_(rows[i][1]) === String(target.returnDate || '') &&
+          String(rows[i][2]) === String(target.departure_id || '') &&
+          String(rows[i][3]) === String(target.arrival_id || '') &&
+          Number(rows[i][4]) === Number(target.maxPrice);
+        if (sameRoute && (!target.updatedAt || rowUpdatedAt === target.updatedAt)) {
+          rowIndexToUpdate = i;
+          break;
+        }
+      }
+    } else if (typeof target === 'number' && target >= 0 && target < dataRowCount) {
+      rowIndexToUpdate = target;
+    }
+
+    if (rowIndexToUpdate === -1) {
+      return { ok: false, message: '找不到該路線（可能已被更新或刪除）', routes: getRoutes() };
+    }
+
+    var updatedRow = [
+      data.outboundDate,
+      data.returnDate,
+      data.departure_id,
+      data.arrival_id,
+      Number(data.maxPrice),
+      new Date().toISOString()
+    ];
+    sheet.getRange(2 + rowIndexToUpdate, 1, 1, HEADERS.length).setValues([updatedRow]);
+    return { ok: true, message: '已更新追蹤路線', routes: getRoutes() };
   } finally {
     lock.releaseLock();
   }
