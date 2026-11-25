@@ -31,7 +31,7 @@ const MAX_DISPLAY_FLIGHTS = 5;
 function calcTripDays(outboundDate: string, returnDate: string): number | null {
   const start = new Date(`${outboundDate}T00:00:00Z`).getTime();
   const end = new Date(`${returnDate}T00:00:00Z`).getTime();
-  if (isNaN(start) || isNaN(end) || end <= start) return null;
+  if (isNaN(start) || isNaN(end) || end < start) return null;
   return Math.round((end - start) / (1000 * 60 * 60 * 24));
 }
 
@@ -65,9 +65,9 @@ export function buildFlexBubble(input: BubbleInput): object {
       : 0;
 
   const badgeText = savedAmount > 0 ? `低於門檻 $${savedAmount.toLocaleString()}` : '達標通知';
-  const dateLine = tripDays
-    ? `${fmtDate(outboundDate)}（出發）→ ${fmtDate(returnDate)}（回程）· ${tripDays} 天`
-    : `${fmtDate(outboundDate)}（出發）→ ${fmtDate(returnDate)}（回程）`;
+  const durationSuffix =
+    tripDays === 0 ? ' · 當天來回' : tripDays !== null ? ` · ${tripDays} 天` : '';
+  const dateLine = `${fmtDate(outboundDate)}（出發）→ ${fmtDate(returnDate)}（回程）${durationSuffix}`;
 
   const routeCode = departureId && arrivalId ? `${departureId} → ${arrivalId}` : null;
 

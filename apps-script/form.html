@@ -397,7 +397,7 @@
     retEl.min = today;
     outEl.addEventListener('change', function () {
       retEl.min = outEl.value || today;
-      if (retEl.value && outEl.value && retEl.value <= outEl.value) {
+      if (retEl.value && outEl.value && retEl.value < outEl.value) {
         retEl.value = '';
       }
     });
