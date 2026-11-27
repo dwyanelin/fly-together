@@ -172,6 +172,16 @@ pnpm setup:richmenu  # 建立/重建 LINE 圖文選單（一次性）
 
 也可隨時透過 **Actions → Flight Price Monitor → Run workflow** 手動觸發。
 
+## CI / CD 自動化
+
+| Workflow | 觸發時機 | 執行內容 |
+|----------|----------|----------|
+| `.github/workflows/ci.yml` | PR 至 `main`、push 至 `main` | 執行 `pnpm typecheck`、`pnpm test:coverage`、`pnpm build` |
+| `.github/workflows/pages.yml` | 變更 `docs/**` 並合入 `main`（或手動觸發） | 自動部署前端設定頁至 GitHub Pages |
+| `.github/workflows/richmenu.yml` | 變更 `assets/richmenu.png` 或 `scripts/setup-richmenu.ts` 並合入 `main`（或手動觸發） | 自動執行 `pnpm setup:richmenu` 更新 LINE 圖文選單（使用現有 `LINE_CHANNEL_ACCESS_TOKEN` Secret；若需自訂連結可另設 Repository Variable `FORM_URL`） |
+
+> `apps-script/` 維持於 [script.google.com](https://script.google.com) 手動更新部署，以避免個人 Google 帳號 OAuth token 過期維護成本。
+
 ## 架構
 
 ```

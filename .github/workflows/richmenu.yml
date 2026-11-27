@@ -1,0 +1,43 @@
+name: Deploy LINE Rich Menu
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'assets/richmenu.png'
+      - 'scripts/setup-richmenu.ts'
+      - '.github/workflows/richmenu.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: line-richmenu
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Deploy LINE Rich Menu
+        run: pnpm setup:richmenu
+        env:
+          LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
+          FORM_URL: ${{ vars.FORM_URL }}
